@@ -14,14 +14,23 @@ public class DataNode {
     }   
 
     /*
-      Stores data locally.
+      Stores a new chunk of data locally.
      */
     public void store(String filename_chunkID, String data) {
 	// TODO
     }
 
     /*
-      Returns requested data.
+      Writes to the end of an existing file.
+      May be triggered by a client or e.g. a Reducer.
+     */
+    public void append(String filename_chunkID, String new_data) {
+	// TODO
+    }
+
+    /*
+      Reads and returns requested data. 
+      Should be called *locally* by e.g. a Mapper or Reducer.
      */
     /*
     public String data(String filename_chunkID) {
