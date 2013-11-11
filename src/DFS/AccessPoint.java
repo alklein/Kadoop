@@ -17,17 +17,19 @@ public class AccessPoint {
     /*
       Lists all files available in DFS.
      */
+    /*
     public ArrayList<String> ls() {
 	// TODO
-    }
+	} */
 
     /*
       Lists all files available on current node.
       For use in MapReduce.
      */
+    /*
     public ArrayList<String> ls_local() {
 	// TODO
-    }
+	} */
 
     /*
       Returns all data in target file (from some copy).

@@ -7,6 +7,9 @@ import java.io.EOFException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import UTILS.*;
+import UTILS.Constants.*;
+
 public class NameNode {
 
     static String host;
@@ -21,12 +24,14 @@ public class NameNode {
     private HashMap<String, ArrayList<String>> data_locations = new HashMap<String, ArrayList<String>>();    
 
     private NameNode(int port) {
+	/*
 	try {
 	    host = InetAddress.getLocalHost().getHostAddress();
 	    System.out.println(" [NN] > Got NameNode host address: " + host);
 	} catch (UnknownHostException e) {
 	    System.out.println(" [NN] > Failed to get NameNode host address :(");
-	}
+	    }*/
+	host = UTILS.Constants.NAMENODE_IP;
 
 	try {
 	    listener = new ServerSocket(port);
@@ -119,28 +124,31 @@ public class NameNode {
 	    return;
 	}
 	else {
-	    try {
+	    while (true) {
 		System.out.println(" [NN] > Listening for incoming messages... ");	
-		Socket sock = listener.accept();
-		ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
-		ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
-		// TODO: 
-		// Msg msg = (Msg) ois.readObject();
-		// Msg ret_msg = this.process(msg);
-		// oos.writeObject(ret_msg);
-	    } catch (IOException e) {
-		System.out.println(" [NN] > Lost connection :(");
-	    }
-	}	
+		try {
+		    Socket sock = listener.accept();
+		    ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
+		    ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
+		    Msg msg = (Msg) ois.readObject();
+		    System.out.println(" [NN] Received message!");
+		    // TODO: 
+		    // Msg ret_msg = this.process(msg);
+		    // oos.writeObject(ret_msg);
+		} catch (ClassNotFoundException e) {
+		    e.printStackTrace();
+		} catch (IOException e) {
+		    System.out.println(" [NN] > Lost connection :(");
+		}		
+	    }	
+	}
     }
 
     public static void main(String[] args) {
 
-	int hard_port = 10000; // TODO: get from config file
 	System.out.println(" [NN] > Starting up new NameNode");	
-	NameNode _nn = NameNode.getInstance(hard_port);
+	NameNode _nn = NameNode.getInstance(UTILS.Constants.NAMENODE_PORT);
 	_nn.listen();
-	//System.out.println("I didn't crash!");	
 
     }
 
