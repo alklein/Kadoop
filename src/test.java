@@ -1,4 +1,5 @@
 import DFS.*;
+import UTILS.*;
 import java.util.*;
 
 public class test {
@@ -10,7 +11,7 @@ public class test {
 	/* Chunk Tests */
 
 	System.out.println(" > Creating new data chunk.");
-	DFS.Chunk c = new DFS.Chunk();
+	UTILS.Chunk c = new UTILS.Chunk();
 	c.set_filename("File A");
 	c.set_chunkID("2");
 	c.set_data("Andrea Klein");
