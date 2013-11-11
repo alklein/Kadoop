@@ -23,7 +23,7 @@ public class NameNode {
     // maps from each filename to the chunks that comprise it
     private HashMap<String, ArrayList<String>> chunk_IDs = new HashMap<String, ArrayList<String>>();
     // maps from each file chunk to the actual locations where it resides
-    private HashMap<String, ArrayList<String>> chunk_locations = new HashMap<String, ArrayList<String>>();    
+    private HashMap<ChunkName, ArrayList<Address>> chunk_locations = new HashMap<ChunkName, ArrayList<Address>>();    
 
     private NameNode(int port) {
 	host = UTILS.Constants.NAMENODE_IP;
@@ -98,21 +98,26 @@ public class NameNode {
     /*
       Returns a list of all the files in the DFS.
      */
-    /*
     public ArrayList<String> file_list() {
-	// TODO
+	ArrayList<String> a = new ArrayList<String>();
+	for (String key : chunk_IDs.keySet()) {
+	    a.add(key);
+	}
+	return a;
     }
-    */
 
     /*
-      Returns the actual location of a given file chunk,
-      specified in a string formatted as filename_chunkID.
+      Returns the actual locations of a given file chunk.
+      If the chunk is not in the DFS, returns null.
      */
-    /*
-    public String file_list(String filename_chunkID) {
-	// TODO
+    public ArrayList<Address> where_is(ChunkName name) {
+	if (chunk_locations.containsKey(name)) {
+	    return chunk_locations(name);
+	}
+	else {
+	    return null;
+	}
     }
-    */       
 
     /*
       Parses and processes incoming messages.

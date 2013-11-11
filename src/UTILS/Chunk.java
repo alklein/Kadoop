@@ -4,28 +4,20 @@ import java.util.*;
 
 public class Chunk implements java.io.Serializable {
 
-    private String Filename;
-    private String ChunkID;
+
+    private ChunkName Name;
     private String Data;
 
-    public void set_filename(String filename) {
-	this.Filename = filename;
+    public void set_name(ChunkName n) {
+	this.Name = n;
     }
 
-    public String get_filename() {
-	return this.Filename;
-    } 
-
-    public void set_chunkID(String chunkID) {
-	this.ChunkID = chunkID;
+    public ChunkName get_name() {
+	return this.Name;
     }
 
-    public String get_chunkID() {
-	return this.ChunkID;
-    }
-
-    public void set_data(String data) {
-	this.Data = data;
+    public void set_data(String d) {
+	this.Data = d;
     }
 
     public String get_data() {
