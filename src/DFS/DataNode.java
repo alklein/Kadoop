@@ -14,6 +14,7 @@ public class DataNode {
 
     static String IP;
     static int port;
+    private static Address my_address;
 
     private static DataNode dn = null;
 
@@ -27,6 +28,10 @@ public class DataNode {
     private DataNode(int port) {
 	try {
 	    IP = InetAddress.getLocalHost().getHostAddress();
+	    Address a = new Address();
+	    a.set_IP(IP);
+	    a.set_port(port);
+	    my_address = a;
 	    System.out.println(" [DN] > Got DataNode host address: " + IP);
 	} catch (UnknownHostException e) {
 	    System.out.println(" [DN] > Failed to get DataNode host address :(");
@@ -81,7 +86,7 @@ public class DataNode {
 	ois = new ObjectInputStream(sock.getInputStream());	
 	while (true) { 
 	    Msg msg = (Msg) ois.readObject();
-	    System.out.println(" [DN] Received a message");
+	    System.out.println(" [DN] > Received a message!");
 	    // TODO: parse msg  
 	    // this.process(msg);  
 	}
@@ -105,6 +110,7 @@ public class DataNode {
 	    oos = new ObjectOutputStream(sock.getOutputStream());
 	    Msg greeting = new Msg();
 	    greeting.set_msg_type(Constants.MESSAGE_TYPE.DATANODE_GREETING);
+	    greeting.set_return_address(my_address);
 	    this.write_to_NN(greeting);
 	    this.listen_to_NN(); 
 	} catch (UnknownHostException e) {

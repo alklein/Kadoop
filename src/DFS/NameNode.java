@@ -19,20 +19,15 @@ public class NameNode {
     private ServerSocket listener = null;
 
     // maps from the address of each available node to an array list of the file chunks it manages
-    private HashMap<String, ArrayList<String>> available_nodes = new HashMap<String, ArrayList<String>>();
+    private HashMap<Address, ArrayList<String>> available_nodes = new HashMap<Address, ArrayList<String>>();
+    // maps from each filename to the chunks that comprise it
+    private HashMap<String, ArrayList<String>> chunk_IDs = new HashMap<String, ArrayList<String>>();
     // maps from each file chunk to the actual locations where it resides
-    private HashMap<String, ArrayList<String>> data_locations = new HashMap<String, ArrayList<String>>();    
+    private HashMap<String, ArrayList<String>> chunk_locations = new HashMap<String, ArrayList<String>>();    
 
     private NameNode(int port) {
-	/*
-	try {
-	    host = InetAddress.getLocalHost().getHostAddress();
-	    System.out.println(" [NN] > Got NameNode host address: " + host);
-	} catch (UnknownHostException e) {
-	    System.out.println(" [NN] > Failed to get NameNode host address :(");
-	    }*/
 	host = UTILS.Constants.NAMENODE_IP;
-
+	System.out.println(" [NN] > NameNode started with host address: " + host);
 	try {
 	    listener = new ServerSocket(port);
 	} catch (IOException e) {
@@ -50,9 +45,12 @@ public class NameNode {
 
     /*
       When a new DataNode comes online, adds it to the available nodes.
+      Clobbers any existing record of a DataNode at that location.
      */
-    private void add_node() {
-	// TODO
+    private void add_node(Msg msg) {
+	Address a = msg.get_return_address();
+	ArrayList<String> chunks = new ArrayList<String>();
+	available_nodes.put(a, chunks);
     }
 
     /*
@@ -87,13 +85,15 @@ public class NameNode {
     }
 
     /*
-      Returns a list of the available computing nodes.
+      Returns a list of the available computing nodes by address.
      */
-    /*
-    public ArrayList<String> node_list() {
-	// TODO
+    public ArrayList<Address> node_list() {
+	ArrayList<Address> a = new ArrayList<Address>();
+	for (Address key : available_nodes.keySet()) {
+	    a.add(key);
+	}
+	return a;
     }
-    */
 
     /*
       Returns a list of all the files in the DFS.
@@ -114,6 +114,17 @@ public class NameNode {
     }
     */       
 
+    /*
+      Parses and processes incoming messages.
+     */
+    private void process(Msg msg) {
+	UTILS.Constants.MESSAGE_TYPE mt = msg.get_msg_type();
+	if (mt == Constants.MESSAGE_TYPE.DATANODE_GREETING) {
+	    this.add_node(msg);
+	}
+	// TODO: respond to other message types here
+    }
+
     /* 
        Listens for messages from DataNodes and clients.
        Periodically polls the nodes.
@@ -132,9 +143,7 @@ public class NameNode {
 		    ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
 		    Msg msg = (Msg) ois.readObject();
 		    System.out.println(" [NN] Received message!");
-		    // TODO: 
-		    // Msg ret_msg = this.process(msg);
-		    // oos.writeObject(ret_msg);
+		    this.process(msg);
 		} catch (ClassNotFoundException e) {
 		    e.printStackTrace();
 		} catch (IOException e) {
