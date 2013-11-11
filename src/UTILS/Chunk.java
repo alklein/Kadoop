@@ -4,7 +4,6 @@ import java.util.*;
 
 public class Chunk implements java.io.Serializable {
 
-
     private ChunkName Name;
     private String Data;
 

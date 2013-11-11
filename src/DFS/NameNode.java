@@ -112,7 +112,7 @@ public class NameNode {
      */
     public ArrayList<Address> where_is(ChunkName name) {
 	if (chunk_locations.containsKey(name)) {
-	    return chunk_locations(name);
+	    return chunk_locations.get(name);
 	}
 	else {
 	    return null;
@@ -125,6 +125,7 @@ public class NameNode {
     private void process(Msg msg) {
 	UTILS.Constants.MESSAGE_TYPE mt = msg.get_msg_type();
 	if (mt == Constants.MESSAGE_TYPE.DATANODE_GREETING) {
+	    System.out.println(" [NN] > Processing DATANODE_GREETING");
 	    this.add_node(msg);
 	}
 	// TODO: respond to other message types here
@@ -147,7 +148,7 @@ public class NameNode {
 		    ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
 		    ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
 		    Msg msg = (Msg) ois.readObject();
-		    System.out.println(" [NN] Received message!");
+		    System.out.println(" [NN] > Received message!");
 		    this.process(msg);
 		} catch (ClassNotFoundException e) {
 		    e.printStackTrace();

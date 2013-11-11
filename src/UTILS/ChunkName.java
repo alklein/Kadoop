@@ -23,4 +23,8 @@ public class ChunkName implements java.io.Serializable {
 	return this.ChunkID;
     }
 
+    public String to_String() {
+	return this.Filename + "_" + this.ChunkID;
+    }
+
 }

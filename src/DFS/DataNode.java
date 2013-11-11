@@ -5,16 +5,28 @@ import UTILS.Constants.*;
 
 import java.net.*;
 import java.util.*;
+
+import java.io.Writer;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.EOFException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
+import java.nio.ByteBuffer;
+import java.nio.file.Paths;
+import java.nio.file.Files;
 
 public class DataNode {
 
     static String IP;
     static int port;
     private static Address my_address;
+    private static Charset encoding = StandardCharsets.UTF_8;
 
     private static DataNode dn = null;
 
@@ -36,14 +48,6 @@ public class DataNode {
 	} catch (UnknownHostException e) {
 	    System.out.println(" [DN] > Failed to get DataNode host address :(");
 	}
-
-	/*
-	try {
-	    listener = new ServerSocket(port);
-	} catch (IOException e) {
-	    System.out.println(" [DN] > Failed to start DataNode :(");
-	    }*/
-
     }
 
     public static DataNode getInstance(int port) {
@@ -53,30 +57,46 @@ public class DataNode {
 	return dn;
     }   
 
-    /*
-      Stores a new chunk of data locally.
-     */
-    public void store(String filename_chunkID, String data) {
-	// TODO
+    public String path_name(ChunkName n) {
+	return "/tmp/" + n.toString() + ".txt";
     }
 
     /*
-      Writes to the end of an existing file.
+      Stores a chunk of data locally.
+      If file already exists, appends new data to the end.
       May be triggered by a client or e.g. a Reducer.
      */
-    public void append(String filename_chunkID, String new_data) {
-	// TODO
+    public void store(ChunkName n, String data) throws IOException {
+	String path = this.path_name(n);
+	Writer output;
+	output = new BufferedWriter(new FileWriter(path, true));
+	output.append(data);
+	output.close(); 
     }
 
     /*
       Reads and returns requested data. 
       Should be called *locally* by e.g. a Mapper or Reducer.
      */
-    /*
-    public String data(String filename_chunkID) {
-	// TODO
+    public String read(ChunkName name) throws IOException  {
+	String path = this.path_name(name);
+	byte[] encoded = Files.readAllBytes(Paths.get(path));
+	return this.encoding.decode(ByteBuffer.wrap(encoded)).toString();
     }
-    */
+    
+    /*
+      Parses and processes incoming messages.
+     */
+    private void process(Msg msg) {
+	UTILS.Constants.MESSAGE_TYPE mt = msg.get_msg_type();
+	// TODO: respond to message types here
+	/*
+	if (mt == Constants.MESSAGE_TYPE.DATANODE_GREETING) {
+	    System.out.println(" [NN] > Processing DATANODE_GREETING");
+	    this.add_node(msg);
+	    } */
+
+    }
 
     /*
       Receives and responds to messages from the NameNode.
@@ -87,8 +107,7 @@ public class DataNode {
 	while (true) { 
 	    Msg msg = (Msg) ois.readObject();
 	    System.out.println(" [DN] > Received a message!");
-	    // TODO: parse msg  
-	    // this.process(msg);  
+	    this.process(msg);  
 	}
     }
 
@@ -124,7 +143,7 @@ public class DataNode {
     public static void main(String[] args) {
 
 	int hard_port = 10000; // TODO: get from config file
-	System.out.println(" [DN] Starting up new DataNode");
+	System.out.println(" [DN] > Starting up new DataNode");
 	DataNode _dn = DataNode.getInstance(hard_port);
 	try {
 	    _dn.connect();
