@@ -191,7 +191,6 @@ public class DataNode {
     public void connect() throws InterruptedException, ClassNotFoundException {
 	try {
 	    System.out.println(" [DN] > Attempting to reach NameNode at IP " + UTILS.Constants.NAMENODE_IP + " and port " + Integer.toString(UTILS.Constants.NAMENODE_PORT));
-	    // TEMP
 	    String NAMENODE_IP = this.read_NN_IP();
 	    sock = new Socket(NAMENODE_IP, UTILS.Constants.NAMENODE_PORT);
 	    oos = new ObjectOutputStream(sock.getOutputStream());

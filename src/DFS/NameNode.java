@@ -154,6 +154,10 @@ public class NameNode {
 	    System.out.println(" [NN] > Processing DATANODE_GREETING");
 	    this.add_node(msg);
 	}
+	if (mt == Constants.MESSAGE_TYPE.CLIENT_GREETING) {
+	    System.out.println(" [NN] > Processing CLIENT_GREETING");
+	    this.add_node(msg);
+	}
 	// TODO: respond to other message types here
     }
 
