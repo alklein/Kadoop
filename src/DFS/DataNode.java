@@ -23,6 +23,7 @@ import java.nio.file.Files;
 
 public class DataNode {
 
+    static String IP_file = "NN_IP.txt";
     static String IP;
     static int port;
     private static Address my_address;
@@ -36,6 +37,17 @@ public class DataNode {
 
     // data chunks this node is managing
     private HashMap<ChunkName, String> my_data = new HashMap<ChunkName, String>();
+
+    private String read_NN_IP() {
+	try {
+	    String path = this.IP_file;
+	    byte[] encoded = Files.readAllBytes(Paths.get(path));
+	    return this.encoding.decode(ByteBuffer.wrap(encoded)).toString();
+	} catch (IOException e) {
+            e.printStackTrace();
+	}
+	return "";
+    }
 
     private DataNode(int port) {
 	try {
@@ -138,6 +150,15 @@ public class DataNode {
 	    this.send_reply(reply, ret_add);
 	} else if (mt == Constants.MESSAGE_TYPE.WRITE_MEM) {
 	    System.out.println(" [DN] > Processing WRITE_MEM");	    
+	    Address ret_add = msg.get_return_address();
+	    ChunkName n = msg.get_chunk_name();
+	    String data = msg.get_data();
+	    this.write_to_mem(n, data);
+
+	    Msg reply = new Msg();
+	    reply.set_msg_type(Constants.MESSAGE_TYPE.WRITE_MEM_REPLY);
+	    reply.set_return_address(my_address);
+	    this.send_reply(reply, ret_add);
 	}
 
     }
@@ -169,7 +190,10 @@ public class DataNode {
      */
     public void connect() throws InterruptedException, ClassNotFoundException {
 	try {
-	    sock = new Socket(UTILS.Constants.NAMENODE_IP, UTILS.Constants.NAMENODE_PORT);
+	    System.out.println(" [DN] > Attempting to reach NameNode at IP " + UTILS.Constants.NAMENODE_IP + " and port " + Integer.toString(UTILS.Constants.NAMENODE_PORT));
+	    // TEMP
+	    String NAMENODE_IP = this.read_NN_IP();
+	    sock = new Socket(NAMENODE_IP, UTILS.Constants.NAMENODE_PORT);
 	    oos = new ObjectOutputStream(sock.getOutputStream());
 	    Msg greeting = new Msg();
 	    greeting.set_msg_type(Constants.MESSAGE_TYPE.DATANODE_GREETING);

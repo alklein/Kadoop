@@ -1,17 +1,22 @@
 package DFS;
 
-import java.net.*;
-import java.util.*;
-import java.io.IOException;
-import java.io.EOFException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-
 import UTILS.*;
 import UTILS.Constants.*;
 
+import java.net.*;
+import java.util.*;
+import java.io.Writer;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.EOFException;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 public class NameNode {
 
+    static String IP_file = "NN_IP.txt";
     static String host;
     static int port;
 
@@ -25,11 +30,32 @@ public class NameNode {
     // maps from each file chunk to the actual locations where it resides
     private HashMap<ChunkName, ArrayList<Address>> chunk_locations = new HashMap<ChunkName, ArrayList<Address>>();    
 
+    /*
+      Writes NameNode's IP address to a file so DataNodes can find it.
+     */
+    private void record_IP(String ip) {
+	try {
+	    String path = this.IP_file;
+	    Writer output;
+	    output = new BufferedWriter(new FileWriter(path, false));
+	    output.write(ip);
+	    output.close(); 
+	} catch (IOException e) {
+	    e.printStackTrace();	    
+	}
+    }
+
     private NameNode(int port) {
-	host = UTILS.Constants.NAMENODE_IP;
+	try {
+	    host = InetAddress.getLocalHost().getHostAddress();
+	} catch (UnknownHostException e) {
+	    e.printStackTrace();	    
+	}
+	this.record_IP(host);
 	System.out.println(" [NN] > NameNode started with host address: " + host);
 	try {
 	    listener = new ServerSocket(port);
+	    System.out.println(" [NN] > NameNode started with port: " + Integer.toString(port));
 	} catch (IOException e) {
 	    System.out.println(" [NN] > Failed to start NameNode :(");
 	}
