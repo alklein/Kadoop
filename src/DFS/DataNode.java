@@ -34,8 +34,8 @@ public class DataNode {
     private ObjectInputStream ois;
     private Socket sock = null;
 
-    // list of data chunks this node is managing
-    private ArrayList<String> my_files = new ArrayList<String>();
+    // data chunks this node is managing
+    private HashMap<ChunkName, String> my_data = new HashMap<ChunkName, String>();
 
     private DataNode(int port) {
 	try {
@@ -66,7 +66,7 @@ public class DataNode {
       If file already exists, appends new data to the end.
       May be triggered by a client or e.g. a Reducer.
      */
-    public void store(ChunkName n, String data) throws IOException {
+    public void write_to_disc(ChunkName n, String data) throws IOException {
 	String path = this.path_name(n);
 	Writer output;
 	output = new BufferedWriter(new FileWriter(path, true));
@@ -78,10 +78,46 @@ public class DataNode {
       Reads and returns requested data. 
       Should be called *locally* by e.g. a Mapper or Reducer.
      */
-    public String read(ChunkName name) throws IOException  {
+    public String read_from_disc(ChunkName name) throws IOException  {
 	String path = this.path_name(name);
 	byte[] encoded = Files.readAllBytes(Paths.get(path));
 	return this.encoding.decode(ByteBuffer.wrap(encoded)).toString();
+    }
+
+    /*
+      Stores a chunk of data in memory.
+      If data already exists, appends new data to the end.
+     */
+    public void write_to_mem(ChunkName n, String data) {
+	if (!my_data.containsKey(n)) {
+	    this.my_data.put(n, data);
+	} else {
+	    String old_data = this.my_data.get(n);
+	    String new_data = old_data + data;
+	    this.my_data.put(n, new_data);
+	}
+    }
+
+    /*
+      Reads and returns requested data. 
+    */
+    public String read_from_mem(ChunkName n) {
+	if (my_data.containsKey(n)) {
+	    return this.my_data.get(n);
+	} else {
+	    return null;
+	}
+    }
+
+    public void send_reply(Msg reply, Address add) {
+	try {
+	    Socket temp_sock = new Socket(add.get_IP(), add.get_port());
+	    ObjectOutputStream temp_oos = new ObjectOutputStream(sock.getOutputStream());
+	    temp_oos.writeObject(reply);
+	    temp_oos.flush();
+	} catch (IOException e) {
+            e.printStackTrace();
+        } 	
     }
     
     /*
@@ -89,12 +125,20 @@ public class DataNode {
      */
     private void process(Msg msg) {
 	UTILS.Constants.MESSAGE_TYPE mt = msg.get_msg_type();
-	// TODO: respond to message types here
-	/*
-	if (mt == Constants.MESSAGE_TYPE.DATANODE_GREETING) {
-	    System.out.println(" [NN] > Processing DATANODE_GREETING");
-	    this.add_node(msg);
-	    } */
+	if (mt == Constants.MESSAGE_TYPE.READ_MEM) {
+	    System.out.println(" [DN] > Processing READ_MEM");	    
+	    Address ret_add = msg.get_return_address();
+	    ChunkName n = msg.get_chunk_name();
+	    String data = this.read_from_mem(n);
+	    
+	    Msg reply = new Msg();
+	    reply.set_msg_type(Constants.MESSAGE_TYPE.READ_MEM_REPLY);
+	    reply.set_return_address(my_address);
+	    reply.set_data(data);
+	    this.send_reply(reply, ret_add);
+	} else if (mt == Constants.MESSAGE_TYPE.WRITE_MEM) {
+	    System.out.println(" [DN] > Processing WRITE_MEM");	    
+	}
 
     }
 

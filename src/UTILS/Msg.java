@@ -6,6 +6,8 @@ public class Msg implements java.io.Serializable {
 
     private MESSAGE_TYPE msg_type = null;
     private Address return_address = null;
+    private ChunkName name = null;
+    private String data = null;
 
     public void set_msg_type(MESSAGE_TYPE tp)
     {
@@ -23,6 +25,22 @@ public class Msg implements java.io.Serializable {
 
     public Address get_return_address() {
 	return this.return_address;
+    }
+
+    public void set_chunk_name(ChunkName n) {
+	this.name = n;
+    }
+
+    public ChunkName get_chunk_name() {
+	return this.name;
+    }
+
+    public void set_data(String d) {
+	this.data = d;
+    }
+
+    public String get_data() {
+	return this.data;
     }
 
 }
