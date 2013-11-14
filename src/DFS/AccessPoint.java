@@ -30,24 +30,38 @@ public class AccessPoint {
     static String IP_file = "NN_IP.txt";
     static String IP;
     static int port;
+    
+    static String M_IP;
+    static int M_Port;
+
     private static Address my_address;
     private static Charset encoding = StandardCharsets.UTF_8;
-
-    private static AccessPoint ap = new AccessPoint();
 
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
     private Socket sock = null;
 
-    public static AccessPoint getInstance() {
-	return ap;
+    public AccessPoint(int p) {
+	String NAMENODE_IP = read_NN_IP();
+	M_IP = NAMENODE_IP;
+	M_Port = UTILS.Constants.NAMENODE_PORT;
+
+	try {
+	    String IP = InetAddress.getLocalHost().getHostAddress();
+	} catch (UnknownHostException e) {
+	    e.printStackTrace();
+	}
+	Address a = new Address();
+	a.set_IP(IP);
+	a.set_port(p);
+	my_address = a;
     }
 
-    private String read_NN_IP() {
+    private static String read_NN_IP() {
 	try {
-	    String path = this.IP_file;
+	    String path = IP_file;
 	    byte[] encoded = Files.readAllBytes(Paths.get(path));
-	    return this.encoding.decode(ByteBuffer.wrap(encoded)).toString();
+	    return encoding.decode(ByteBuffer.wrap(encoded)).toString();
 	} catch (IOException e) {
             e.printStackTrace();
 	}
@@ -96,27 +110,38 @@ public class AccessPoint {
 	// TODO
     }
 
-    public void connect(int p) throws InterruptedException, ClassNotFoundException, UnknownHostException {
-	String IP = InetAddress.getLocalHost().getHostAddress();
-	Address a = new Address();
-	a.set_IP(IP);
-	a.set_port(p);
-	this.my_address = a;
-
+    private static Msg communicate(Msg msg)
+    {
+    	Socket sock;
+    	Msg ret_msg = null;
+	System.out.println(" [AP] > Trying to reach NameNode at IP " + M_IP + " and port " + Integer.toString(M_Port));
 	try {
-	    System.out.println(" [DN] > Attempting to reach NameNode at IP " + UTILS.Constants.NAMENODE_IP + " and port " + Integer.toString(UTILS.Constants.NAMENODE_PORT));
-	    String NAMENODE_IP = this.read_NN_IP();
-	    this.sock = new Socket(NAMENODE_IP, UTILS.Constants.NAMENODE_PORT);
-	    this.oos = new ObjectOutputStream(sock.getOutputStream());
-	    Msg greeting = new Msg();
-	    greeting.set_msg_type(Constants.MESSAGE_TYPE.CLIENT_GREETING);
-	    greeting.set_return_address(my_address);
-	    this.write_to_NN(greeting);
-	} catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } 
+	    sock = new Socket(M_IP, M_Port);
+	    ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
+	    ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());	    
+	    oos.writeObject(msg);
+	    ret_msg = (Msg)ois.readObject();	    
+	    sock.close();
+	} catch (UnknownHostException e1) {
+	    e1.printStackTrace();
+	} catch (IOException e1) {
+	    System.out.println(" [AP] > Failed to connect to NameNode");
+	}catch (ClassNotFoundException e) {
+	    System.out.println(" [AP] > Did not receive ack from NameNode");
+    	}	
+	return ret_msg;
+    }
+
+    public void connect() throws InterruptedException, ClassNotFoundException, UnknownHostException {
+	Msg greeting = new Msg();
+	greeting.set_msg_type(Constants.MESSAGE_TYPE.CLIENT_GREETING);
+	greeting.set_return_address(my_address);
+	Msg reply = communicate(greeting);
+    }
+
+    public static void main(String args[])
+    {
+
     }
 
 }

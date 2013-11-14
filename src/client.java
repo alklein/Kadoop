@@ -9,9 +9,9 @@ public class client {
 
     public static void main(String[] args) throws InterruptedException, ClassNotFoundException, UnknownHostException {
 
-	AccessPoint ap = new AccessPoint();
 	int port = 1001;
-	ap.connect(port);
+	AccessPoint ap = new AccessPoint(port);
+	ap.connect();
 
     }
 

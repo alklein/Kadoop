@@ -148,22 +148,26 @@ public class NameNode {
     /*
       Parses and processes incoming messages.
      */
-    private void process(Msg msg) {
+    private Msg process(Msg msg) {
+	Msg reply = new Msg();
 	UTILS.Constants.MESSAGE_TYPE mt = msg.get_msg_type();
 	if (mt == Constants.MESSAGE_TYPE.DATANODE_GREETING) {
 	    System.out.println(" [NN] > Processing DATANODE_GREETING");
 	    this.add_node(msg);
+	    reply.set_msg_type(Constants.MESSAGE_TYPE.GREETING_REPLY);
 	}
 	if (mt == Constants.MESSAGE_TYPE.CLIENT_GREETING) {
 	    System.out.println(" [NN] > Processing CLIENT_GREETING");
 	    this.add_node(msg);
+	    reply.set_msg_type(Constants.MESSAGE_TYPE.GREETING_REPLY);
 	}
 	// TODO: respond to other message types here
+	return reply;
     }
 
     /* 
        Listens for messages from DataNodes and clients.
-       Periodically polls the nodes.
+       Periodically polls the nodes. (TODO)
      */
     private void listen() {
 	if (listener == null) {
@@ -179,7 +183,8 @@ public class NameNode {
 		    ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
 		    Msg msg = (Msg) ois.readObject();
 		    System.out.println(" [NN] > Received message!");
-		    this.process(msg);
+		    Msg reply = this.process(msg);
+		    oos.writeObject(reply);
 		} catch (ClassNotFoundException e) {
 		    e.printStackTrace();
 		} catch (IOException e) {
