@@ -121,11 +121,27 @@ public class AccessPoint {
     /*
       Returns all data in target file (from some copy).
      */
-    /*
-    public String read(String filename) {
+    public String read_file(String filename) {
 	// TODO
+	return "";
     }
-    */
+
+    /*
+      Returns data with specified chunkname, if it is in the DFS.
+     */
+    public String read_chunk(ChunkName n) {
+	Msg m = new Msg();
+	m.set_msg_type(Constants.MESSAGE_TYPE.READ_CHUNK);
+	m.set_chunk_name(n);
+	Msg reply = communicate(m);
+	if (reply != null && reply.get_msg_type() == Constants.MESSAGE_TYPE.READ_CHUNK_REPLY) {
+	    System.out.println(" [AP] > Received READ_CHUNK_REPLY from NameNode!");
+	    return reply.get_data();
+	} else {
+	    System.out.println(" [AP] > Did not get READ_CHUNK_REPLY from NameNode :(");
+	    return null;
+	}
+    }
 
     /*
       Appends new data to target file (on all copies).

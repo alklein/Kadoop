@@ -8,7 +8,7 @@ import java.util.*;
 public class client {
 
     public static void print_arr_list(ArrayList<String> l) {
-	System.out.println(" >>> Current contents of file system:");
+	System.out.println(" [CLIENT] > Current contents of file system:");
 	for (int i=0; i < l.size(); i++) {
 	    System.out.println(" >>> " + l.get(i));
 	}
@@ -19,6 +19,7 @@ public class client {
 	int port = 1001;
 	AccessPoint ap = new AccessPoint(port);
 	ap.greet_NN();
+
 	ArrayList<String> file_list = ap.ls();
 	print_arr_list(file_list);
 
@@ -29,8 +30,17 @@ public class client {
 	c.set_name(n);
 	c.set_data("Andrea Klein");
 
+	System.out.println(" [CLIENT] > Attempting to write a file chunk");
 	ap.write_chunk(c);
-	// ap.read_chunk(n);
+	
+	print_arr_list(ap.ls());
+
+	// TODO here: check on metadata updates. 
+	// Find out what files are in the filesystem.
+	// Find out where they are.
+
+	String d = ap.read_chunk(n);
+	System.out.println(" [CLIENT] > Data read back from DFS: " + d);
     }
 
 }

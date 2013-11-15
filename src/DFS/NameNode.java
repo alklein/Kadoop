@@ -88,9 +88,30 @@ public class NameNode {
     }
 
     private String get_chunk_data(ChunkName n) {
-	String s = "";
-	// TODO: get from any DataNode that has a chunk by that name.
-	// If none found, just return empty string.
+	String s = null;
+	for (Map.Entry<Address, ArrayList<ChunkName>> entry : available_nodes.entrySet()) {
+	    Address add = entry.getKey();
+	    ArrayList<ChunkName> names = entry.getValue();
+	    for (int i=0; i < names.size(); i++) {
+		ChunkName cur = names.get(i);
+		// If a DataNode has the desired chunk, 
+		// get the data from it, then immediately return it
+		if (cur == n) {
+		    Msg m = new Msg();
+		    m.set_msg_type(Constants.MESSAGE_TYPE.READ_MEM);
+		    try {
+			Msg reply = this.send_to_DN(m, add);
+			return reply.get_data();
+		    } catch (UnknownHostException e) {
+			e.printStackTrace();
+		    } catch (IOException e) {
+			e.printStackTrace();
+		    } catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		    }	    
+		}
+	    }
+	}
 	return s;
     }
 
@@ -173,7 +194,19 @@ public class NameNode {
 	    try {
 		Msg reply = this.send_to_DN(m, a);
 		rep_count += 1;
-		// TODO: update metadata
+		// update metadata: this node now has this chunk
+		ArrayList<ChunkName> names = available_nodes.get(a);
+		names.add(n);
+		available_nodes.put(a, names);		
+		// update metadata: this chunk now stored at this location
+		ArrayList<Address> locs = null;
+		if (chunk_locations.containsKey(n)) {
+		    locs = chunk_locations.get(n);
+		} else {
+		    locs = new ArrayList<Address>();
+		}
+		locs.add(a);
+		chunk_locations.put(n, locs);
 	    } catch (UnknownHostException e) {
 		e.printStackTrace();
 	    } catch (IOException e) {
