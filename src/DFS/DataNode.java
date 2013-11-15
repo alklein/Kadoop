@@ -147,7 +147,14 @@ public class DataNode {
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.READ_MEM_REPLY);
 	    reply.set_return_address(my_address);
 	    reply.set_data(data);
-	    this.send_reply(reply, ret_add);
+	    try {
+		this.write_to_NN(reply);
+	    } catch (IOException e) {
+		e.printStackTrace();
+	    }
+	    catch (ClassNotFoundException e) {
+		e.printStackTrace();
+	    }
 	} else if (mt == Constants.MESSAGE_TYPE.WRITE_MEM) {
 	    System.out.println(" [DN] > Processing WRITE_MEM");	    
 	    Address ret_add = msg.get_return_address();
@@ -158,7 +165,14 @@ public class DataNode {
 	    Msg reply = new Msg();
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.WRITE_MEM_REPLY);
 	    reply.set_return_address(my_address);
-	    this.send_reply(reply, ret_add);
+	    try {
+		this.write_to_NN(reply);
+	    } catch (IOException e) {
+		e.printStackTrace();
+	    }
+	    catch (ClassNotFoundException e) {
+		e.printStackTrace();
+	    }
 	}
 
     }
@@ -167,9 +181,9 @@ public class DataNode {
       Receives and responds to messages from the NameNode.
      */
     public void listen_to_NN() throws IOException, ClassNotFoundException {
-	System.out.println(" [DN] > Listening for messages");
 	ois = new ObjectInputStream(sock.getInputStream());	
 	while (true) { 
+	    System.out.println(" [DN] > Listening for messages...");
 	    Msg msg = (Msg) ois.readObject();
 	    System.out.println(" [DN] > Received a message!");
 	    this.process(msg);  

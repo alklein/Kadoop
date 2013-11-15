@@ -87,7 +87,7 @@ public class AccessPoint {
 	    e1.printStackTrace();
 	} catch (IOException e1) {
 	    System.out.println(" [AP] > Failed to connect to NameNode :(");
-	}catch (ClassNotFoundException e) {
+	} catch (ClassNotFoundException e) {
 	    System.out.println(" [AP] > Did not receive reply from NameNode :(");
     	}	
 	return ret_msg;
@@ -132,11 +132,11 @@ public class AccessPoint {
      */
     public void write_chunk(UTILS.Chunk c) {
 	Msg m = new Msg();
-	m.set_msg_type(Constants.MESSAGE_TYPE.WRITE_MEM);
+	m.set_msg_type(Constants.MESSAGE_TYPE.WRITE);
 	m.set_chunk_name(c.get_name());
 	m.set_data(c.get_data());
 	Msg reply = communicate(m);
-	if (reply != null && reply.get_msg_type() == Constants.MESSAGE_TYPE.WRITE_MEM_REPLY) {
+	if (reply != null && reply.get_msg_type() == Constants.MESSAGE_TYPE.WRITE) {
 	    System.out.println(" [AP] > Received WRITE_MEM_REPLY from NameNode!");
 	} else {
 	    System.out.println(" [AP] > Did not get WRITE_MEM_REPLY from NameNode :(");
