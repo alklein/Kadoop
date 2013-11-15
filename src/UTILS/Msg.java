@@ -1,6 +1,7 @@
 package UTILS;
 
 import UTILS.Constants.MESSAGE_TYPE;
+import java.util.*;
 
 public class Msg implements java.io.Serializable {
 
@@ -8,6 +9,7 @@ public class Msg implements java.io.Serializable {
     private Address return_address = null;
     private ChunkName name = null;
     private String data = null;
+    private ArrayList<String> arr_list = null;
 
     public void set_msg_type(MESSAGE_TYPE tp)
     {
@@ -41,6 +43,14 @@ public class Msg implements java.io.Serializable {
 
     public String get_data() {
 	return this.data;
+    }
+
+    public void set_arr_list(ArrayList<String> al) {
+	this.arr_list = al;
+    }
+
+    public ArrayList<String> get_arr_list() {
+	return this.arr_list;
     }
 
 }

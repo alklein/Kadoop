@@ -19,12 +19,13 @@ public class NameNode {
     static String IP_file = "NN_IP.txt";
     static String host;
     static int port;
+    static int rep_factor = 3; // TODO: get from config file
 
     private static NameNode nn = null;
     private ServerSocket listener = null;
 
     // maps from the address of each available node to an array list of the file chunks it manages
-    private HashMap<Address, ArrayList<String>> available_nodes = new HashMap<Address, ArrayList<String>>();
+    private HashMap<Address, ArrayList<ChunkName>> available_nodes = new HashMap<Address, ArrayList<ChunkName>>();
     // maps from each filename to the chunks that comprise it
     private HashMap<String, ArrayList<String>> chunk_IDs = new HashMap<String, ArrayList<String>>();
     // maps from each file chunk to the actual locations where it resides
@@ -75,13 +76,18 @@ public class NameNode {
      */
     private void add_node(Msg msg) {
 	Address a = msg.get_return_address();
-	ArrayList<String> chunks = new ArrayList<String>();
+	ArrayList<ChunkName> chunks = new ArrayList<ChunkName>();
 	available_nodes.put(a, chunks);
     }
 
+    private ArrayList<Address> sort_by_load(HashMap<Address, Integer> options) {
+	ArrayList<Address> sorted_options = new ArrayList<Address>();
+	// TODO: implement
+	return sorted_options;
+    }
+
     /*
-      Given a map from file_chunk IDs to memory-loaded data, 
-      assigns each chunk to the least busy DataNodes that 
+      Assigns a chunk to the least busy DataNodes that 
       don't already have it, according to the replication factor
       in the DFS config file. 
 
@@ -89,8 +95,42 @@ public class NameNode {
       updating available_nodes and data_locations, lest someone
       request the data right away. 
      */
-    private void assign_chunks(HashMap<String, String> data) {
-	// TODO
+    private void assign_chunk(ChunkName n, String data) {
+
+	System.out.println(" [NN] WARNING: assign_chunk() not fully implemented");
+	int rep_count = 0;
+
+	// options lists DataNodes that don't already host this content. 
+	// Maps from address to current load.
+	HashMap<Address, Integer> options = new HashMap<Address, Integer>();
+	for (Map.Entry<Address, ArrayList<ChunkName>> entry : available_nodes.entrySet()) {
+	    Address add = entry.getKey();
+	    ArrayList<ChunkName> load = entry.getValue();
+	    // see if node contains chunk with this name
+	    boolean found = false;
+	    for (int i=0; i < load.size(); i++) {
+		if (load.get(i) == n) {
+		    found = true;
+		}
+	    }
+	    // if node does not already contain this chunk: make it an option
+	    if (!found) {
+		options.put(add, load.size());
+	    }
+	}
+	// sort options by current load. store chunk on least busy node(s)
+	ArrayList<Address> sorted_options = this.sort_by_load(options);
+	for (int i=0; i < sorted_options.size(); i++) {
+	    if (rep_count >= rep_factor) {
+		break;
+	    }
+	    // try to send chunk to this address. if successful, increment rep_count.
+	}	    
+	// assign
+	if (rep_count <	rep_factor) {
+	    System.out.println(" [NN] WARNING: not enough DataNodes available to achieve desired replication factor");
+	}
+
     }
 
     /*
@@ -160,6 +200,19 @@ public class NameNode {
 	    System.out.println(" [NN] > Processing CLIENT_GREETING");
 	    this.add_node(msg);
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.GREETING_REPLY);
+	}
+	if (mt == Constants.MESSAGE_TYPE.LS) {
+	    System.out.println(" [NN] > Processing LS");
+	    reply.set_msg_type(Constants.MESSAGE_TYPE.LS_REPLY);
+	    ArrayList<String> l = this.file_list();
+	    reply.set_arr_list(l);
+	}
+	if (mt == Constants.MESSAGE_TYPE.WRITE_MEM) {
+	    System.out.println(" [NN] > Processing WRITE_MEM");
+	    ChunkName n = msg.get_chunk_name();
+	    String d = msg.get_data();
+	    this.assign_chunk(n, d);
+	    reply.set_msg_type(Constants.MESSAGE_TYPE.WRITE_MEM_REPLY);
 	}
 	// TODO: respond to other message types here
 	return reply;
