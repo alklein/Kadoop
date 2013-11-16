@@ -96,9 +96,10 @@ public class NameNode {
 		ChunkName cur = names.get(i);
 		// If a DataNode has the desired chunk, 
 		// get the data from it, then immediately return it
-		if (cur == n) {
+		if (cur.to_String().equals(n.to_String())) {
 		    Msg m = new Msg();
 		    m.set_msg_type(Constants.MESSAGE_TYPE.READ_MEM);
+		    m.set_chunk_name(n);
 		    try {
 			Msg reply = this.send_to_DN(m, add);
 			return reply.get_data();
@@ -207,6 +208,27 @@ public class NameNode {
 		}
 		locs.add(a);
 		chunk_locations.put(n, locs);
+		// update metadata: this file now has this chunk associated with it
+		String file_name = n.get_filename();
+		String chunk_ID = n.get_chunkID();
+		if (chunk_IDs.containsKey(file_name)) { // existing file
+		    ArrayList<String> chunks = chunk_IDs.get(file_name);
+		    boolean has_chunk = false;
+		    for (int j=0; j < chunks.size(); j++) {
+			if (chunks.get(j) == chunk_ID) {
+			    has_chunk = true;
+			}
+		    }
+		    if (!has_chunk) {
+			ArrayList<String> new_chunks = chunks;
+			new_chunks.add(chunk_ID);
+			chunk_IDs.put(file_name, new_chunks);
+		    }
+		} else { // new file
+		    ArrayList<String> chunks = new ArrayList<String>();
+		    chunks.add(chunk_ID);
+		    chunk_IDs.put(file_name, chunks);
+		}
 	    } catch (UnknownHostException e) {
 		e.printStackTrace();
 	    } catch (IOException e) {
@@ -299,7 +321,7 @@ public class NameNode {
 	    ChunkName n = msg.get_chunk_name();
 	    String d = msg.get_data();
 	    this.assign_chunk(n, d);
-	    reply.set_msg_type(Constants.MESSAGE_TYPE.WRITE);
+	    reply.set_msg_type(Constants.MESSAGE_TYPE.WRITE_REPLY);
 	}
 	if (mt == Constants.MESSAGE_TYPE.READ_CHUNK) {
 	    System.out.println(" [NN] > Processing READ_CHUNK");

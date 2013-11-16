@@ -101,7 +101,7 @@ public class DataNode {
       If data already exists, appends new data to the end.
      */
     public void write_to_mem(ChunkName n, String data) {
-	if (!my_data.containsKey(n)) {
+	if (!this.my_data.containsKey(n)) {
 	    this.my_data.put(n, data);
 	} else {
 	    String old_data = this.my_data.get(n);
@@ -114,11 +114,19 @@ public class DataNode {
       Reads and returns requested data. 
     */
     public String read_from_mem(ChunkName n) {
-	if (my_data.containsKey(n)) {
+	for (ChunkName key : this.my_data.keySet()) {
+	    if (n.to_String().equals(key.to_String())) {
+		return this.my_data.get(key);
+	    }
+	}
+	return null;
+	/*
+	if (this.my_data.containsKey(n)) {
+	    System.out.println(" [DN] > Found key");
 	    return this.my_data.get(n);
 	} else {
 	    return null;
-	}
+	    } */
     }
 
     public void send_reply(Msg reply, Address add) {

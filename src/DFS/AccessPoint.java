@@ -75,7 +75,7 @@ public class AccessPoint {
     {
     	Socket sock;
     	Msg ret_msg = null;
-	System.out.println(" [AP] > Trying to greet NameNode at IP " + NN_IP + " and port " + Integer.toString(NN_Port));
+	System.out.println(" [AP] > Contacting NameNode at IP " + NN_IP + " and port " + Integer.toString(NN_Port));
 	try {
 	    sock = new Socket(NN_IP, NN_Port);
 	    ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
@@ -152,10 +152,10 @@ public class AccessPoint {
 	m.set_chunk_name(c.get_name());
 	m.set_data(c.get_data());
 	Msg reply = communicate(m);
-	if (reply != null && reply.get_msg_type() == Constants.MESSAGE_TYPE.WRITE) {
-	    System.out.println(" [AP] > Received WRITE_MEM_REPLY from NameNode!");
+	if (reply != null && reply.get_msg_type() == Constants.MESSAGE_TYPE.WRITE_REPLY) {
+	    System.out.println(" [AP] > Received WRITE_REPLY from NameNode!");
 	} else {
-	    System.out.println(" [AP] > Did not get WRITE_MEM_REPLY from NameNode :(");
+	    System.out.println(" [AP] > Did not get WRITE_REPLY from NameNode :(");
 	}
     }
 
