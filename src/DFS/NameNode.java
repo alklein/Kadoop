@@ -64,6 +64,7 @@ public class NameNode {
 	    System.out.println(" [NN] > NameNode started with port: " + Integer.toString(port));
 	} catch (IOException e) {
 	    System.out.println(" [NN] > Failed to start NameNode :(");
+	    e.printStackTrace();	    
 	}
 
     }
@@ -156,7 +157,6 @@ public class NameNode {
      */
     private void assign_chunk(ChunkName n, String d) {
 
-	System.out.println(" [NN] WARNING: assign_chunk() not fully implemented");
 	int rep_count = 0;
 	System.out.println(" [NN] >>> Number of available nodes: " + Integer.toString(available_nodes.size())); // temp
 

@@ -1,0 +1,7 @@
+{
+	"replication_factor" : 3,
+	"master_node" : "unix6.andrew.cmu.edu",
+	"worker_nodes" : ["unix1.andrew.cmu.edu", "unix2.andrew.cmu.edu", "unix3.andrew.cmu.edu", "unix4.andrew.cmu.edu"],
+	"NameNode_port" : 10000,
+	"DataNode_port" : 12345
+}
