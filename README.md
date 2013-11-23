@@ -1,11 +1,34 @@
 Kadoop
 ======
 
-Instructions for use:
+Kadoop is a map-reduce framework with custom distributed file system.
 
-* enter the source directory: > cd src
-* if desired, edit config.json
-* build the project: > make all
-* change your permissions to permit execution of the startup and shutdown scripts: > chmod u+x start.sh; chmod u+x shutdown.sh
-* start up the Distributed File System and Map Reduce framework: > ./start.sh 
-* press return if necessary, then run Kadoop: > java MR/Kadoop
+## Setup
+
+* Enter the source directory: 
+  > cd src
+  
+* If desired, modify the settings by editing config.json
+
+* Build the project: 
+  > make all
+  
+* Change your permissions to permit execution of the startup and shutdown scripts: 
+  > chmod u+x start.sh; chmod u+x shutdown.sh
+  
+* Start up the Distributed File System and Map Reduce framework: 
+  > ./start.sh 
+  
+* Press return if necessary, then run Kadoop: 
+  > java MR/Kadoop
+
+## Examples
+
+* Coming soon...
+
+## Cleaning Up
+
+* Once you are done (or if you wish to restart), you should execute the shutdown script:
+  > ./shutdown.sh 
+
+* That's it! 
