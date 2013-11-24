@@ -92,6 +92,11 @@ public class Master {
 	oos_map.put(a, oos);
     }
 
+
+    private void assign(ArrayList<ChunkName> chunk_names, String class_name) {
+	// TODO: assign map jobs to idle nodes
+    }
+
     /*
       Parses and processes incoming messages.
      */
@@ -102,6 +107,13 @@ public class Master {
 	    System.out.println(" [MR] > Processing COMPUTENODE_GREETING");
 	    this.add_node(msg, ois, oos);
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.GREETING_REPLY);
+	}
+	if (mt == Constants.MESSAGE_TYPE.ASSIGN_MAPS) {
+	    System.out.println(" [MR] > Processing ASSIGN_MAPS");
+	    String class_name = msg.get_class_name();
+	    ArrayList<ChunkName> chunk_names = msg.get_chunk_names();
+	    this.assign(chunk_names, class_name);
+	    reply.set_msg_type(Constants.MESSAGE_TYPE.ASSIGN_MAPS_REPLY);
 	}
 	// TODO: respond to other message types here
 	return reply;

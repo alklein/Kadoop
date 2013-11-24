@@ -10,6 +10,8 @@ public class Msg implements java.io.Serializable {
     private ChunkName name = null;
     private String data = null;
     private ArrayList<String> arr_list = null;
+    private ArrayList<ChunkName> chunk_names = null;
+    private String class_name = null;
 
     public void set_msg_type(MESSAGE_TYPE tp)
     {
@@ -51,6 +53,22 @@ public class Msg implements java.io.Serializable {
 
     public ArrayList<String> get_arr_list() {
 	return this.arr_list;
+    }
+
+    public void set_chunk_names(ArrayList<ChunkName> cns) {
+	this.chunk_names = cns;
+    }
+
+    public ArrayList<ChunkName> get_chunk_names() {
+	return this.chunk_names;
+    }
+
+    public void set_class_name(String cn) {
+	this.class_name = cn;
+    }
+
+    public String get_class_name() {
+	return this.class_name;
     }
 
 }
