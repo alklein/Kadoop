@@ -94,7 +94,20 @@ public class Master {
 
 
     private void assign(ArrayList<ChunkName> chunk_names, String class_name) {
-	// TODO: assign map jobs to idle nodes
+	long timeoutExpiredMs = System.currentTimeMillis() + UTILS.Constants.MAP_TIMEOUT;
+	while (chunk_names.size() > 0 && System.currentTimeMillis() >= timeoutExpiredMs) {
+	 	// TODO: assign map jobs to idle nodes
+	  /*
+	  Logic:
+	  while chunk_names is non-empty and time < timeout:
+	  assign work to initial list of available nodes.
+	  then listen to computenodes. whenever one requests work, 
+	  mark its last work as done (remove it from chunk_names).
+	  then send it a new task. 
+
+	  should probably return true/false to indicate success or failure. 
+	 */   
+	}
     }
 
     /*

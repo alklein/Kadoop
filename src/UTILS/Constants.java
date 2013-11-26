@@ -7,6 +7,8 @@ public class Constants {
     public static final int NAMENODE_PORT = 15440;
     public static final int MASTER_PORT = 15640;
     public static final int KADOOP_PORT = 11111;
+
+    public static final int MAP_TIMEOUT = 10000; // in milliseconds
    
     public enum MESSAGE_TYPE {
 	DATANODE_GREETING, CLIENT_GREETING, COMPUTENODE_GREETING, GREETING_REPLY, 

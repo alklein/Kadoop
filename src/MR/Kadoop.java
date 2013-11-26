@@ -42,9 +42,9 @@ public class Kadoop {
     private static Address my_address;
     private static Charset encoding = StandardCharsets.UTF_8;
 
-    private ObjectOutputStream oos;
-    private ObjectInputStream ois;
-    private Socket sock = null;
+    private static ObjectOutputStream oos;
+    private static ObjectInputStream ois;
+    private static Socket sock = null;
 
     private static Kadoop k = null;
     private static AccessPoint ap = null;
@@ -178,9 +178,43 @@ public class Kadoop {
 	return result;
     }
 
+    /*
+      Receives messages from the Master.
+    */
+    public static Msg listen_to_Master() throws IOException, ClassNotFoundException {
+	ois = new ObjectInputStream(sock.getInputStream());	
+	while (true) { 
+	    System.out.println(" [K] > Listening for messages...");
+	    Msg msg = (Msg) ois.readObject();
+	    System.out.println(" [K] > Received a message!");
+	    return msg;
+	}
+    }
+
+    /*
+      Sends message to Master.
+    */
+    private static void write_to_Master(Msg m) throws IOException, ClassNotFoundException {
+	oos.writeObject(m);
+	oos.flush();
+    }
+
     // TODO: implement
     private static ArrayList<ChunkName> perform_map(ArrayList<ChunkName> chunk_names, String mapper_classname) {
 	ArrayList<ChunkName> result = null;
+	Msg msg = new Msg();
+	msg.set_msg_type(Constants.MESSAGE_TYPE.ASSIGN_MAPS);
+	msg.set_chunk_names(chunk_names);
+	msg.set_class_name(mapper_classname);	
+	try {
+	    write_to_Master(msg);
+	    Msg reply = listen_to_Master(); 
+	    result = reply.get_chunk_names(); // names of mapped files
+	} catch (IOException e) {
+            e.printStackTrace();
+	} catch (ClassNotFoundException e) {
+            e.printStackTrace();
+	}
 	return result;
     }
 
@@ -196,10 +230,38 @@ public class Kadoop {
 	}
     }
 
+    /*
+      Announces its availability to the Master.
+     */
+    public void connect() throws InterruptedException, ClassNotFoundException {
+	try {
+	    System.out.println(" [K] > Attempting to reach Master...");
+	    String MASTER_IP = this.read_Master_IP();
+	    sock = new Socket(MASTER_IP, UTILS.Constants.MASTER_PORT);
+	    oos = new ObjectOutputStream(sock.getOutputStream());
+	    Msg greeting = new Msg();
+	    greeting.set_msg_type(Constants.MESSAGE_TYPE.COMPUTENODE_GREETING);
+	    greeting.set_return_address(my_address);
+	    this.write_to_Master(greeting);
+	} catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } 
+    }
+
+
     public static void main(String args[])
     {
 	System.out.println(" ~~~ WELCOME TO KADOOP! ~~~");
 	Kadoop _k = Kadoop.getInstance(UTILS.Constants.KADOOP_PORT);
+	try {
+	    _k.connect();
+	} catch (InterruptedException e) {
+	    e.printStackTrace();
+	} catch (ClassNotFoundException e) {
+	    e.printStackTrace();
+	}
 	// TODO: process command-line input from user
 
 	// TEMP:
@@ -219,6 +281,7 @@ public class Kadoop {
 	    System.out.println(" ~~~ INITIALIZATION COMPLETE. CONTENTS OF DFS:");
 	    print_arr_list(ap.ls());
 	    // TEMP:
+	    /*
 	    for (int i=0; i < chunk_names.size(); i++) {
 		ChunkName current = chunk_names.get(i);
 		String name = current.get_filename();
@@ -226,12 +289,16 @@ public class Kadoop {
 		String d = ap.read_chunk(current);
 		System.out.println("Filename: " + name + " chunkID: " + chunk_ID + " Data: \n" + d);
 	    }
+	    */
 	} catch (IOException e) {
 	    System.out.println(" ~~~ INITIALIZATION FAILED. SHUTTING DOWN COMPUTATION.");
 	    cont = false;
 	}
 	if (cont) {
+	    System.out.println(" ~~~ EXECUTING MAP PHASE...");
 	    mapped_chunk_names = _k.perform_map(chunk_names, mapper_classname);
+	    System.out.println(" ~~~ MAP PHASE COMPLETE. CONTENTS OF DFS:");
+	    print_arr_list(ap.ls());
 	}
 	if (cont) {
 	    outfile_name = _k.perform_reduce(mapped_chunk_names, reducer_classname);
