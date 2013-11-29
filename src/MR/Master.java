@@ -92,11 +92,74 @@ public class Master {
 	oos_map.put(a, oos);
     }
 
+    private void remove_node(Address a) {
+	ois_map.remove(a);
+	oos_map.remove(a);
+    }
 
-    private void assign(ArrayList<ChunkName> chunk_names, String class_name) {
-	long timeoutExpiredMs = System.currentTimeMillis() + UTILS.Constants.MAP_TIMEOUT;
-	while (chunk_names.size() > 0 && System.currentTimeMillis() >= timeoutExpiredMs) {
-	 	// TODO: assign map jobs to idle nodes
+    /*
+      Sends message to a ComputeNode.
+     */
+    private Msg send_to_CN(Msg m, Address a) throws UnknownHostException, IOException, ClassNotFoundException {
+	System.out.println(" [MR] > Attempting to reach ComputeNode at IP " + a.get_IP() + " and port " + Integer.toString(a.get_port()));
+	oos_map.get(a).writeObject(m);
+	oos_map.get(a).flush();
+	Msg ret_msg = (Msg) ois_map.get(a).readObject();	    
+	return ret_msg;
+    }
+
+    /*
+      Naive assignment of tasks to ComputeNodes. 
+      TODO: parallelize; exploit locality in disc mode. 
+     */
+    private ArrayList<ChunkName> assign(ArrayList<ChunkName> chunk_names, String class_name) {
+	System.out.println(" [MR] Trying to assign this many chunk maps: " + Integer.toString(chunk_names.size())); 
+	ArrayList<ChunkName> mapped_chunk_names = new ArrayList<ChunkName>();
+	long timeoutExpiredMs = System.currentTimeMillis() + UTILS.Constants.MAP_TIMEOUT_TOTAL;	
+	while (chunk_names.size() > 0) {
+	    // check timeout condition	  
+	    if (System.currentTimeMillis() >= timeoutExpiredMs) {
+		    System.out.println(" [MR] Map computation timed out before completion :(");
+		    break;
+	    }  
+	    for (Address add : ois_map.keySet()) {
+		// check timeout condition
+		if (System.currentTimeMillis() >= timeoutExpiredMs) {
+		    break;
+		}
+
+		// try to dispatch task to that node
+		ChunkName cur_chunk = chunk_names.get(0);
+		Msg m = new Msg();
+		m.set_msg_type(Constants.MESSAGE_TYPE.MAP);
+		m.set_chunk_name(cur_chunk);
+		m.set_class_name(class_name);
+		Timer timer = new Timer(true);
+		//InterruptTimerTask interruptTimerTask = new InterruptTimerTask(Thread.currentThread());
+		IRR interruptTimerTask = new IRR(Thread.currentThread());
+		timer.schedule(interruptTimerTask, UTILS.Constants.MAP_TIMEOUT_NODE);
+		try {		    
+		    Msg reply = this.send_to_CN(m, add);
+		    // if success: record name of mapped chunk;
+		    // remove current chunk from chunk_names
+		    System.out.println(" [MR] Map completed by ComputeNode. Name of mapped file: " + reply.get_chunk_name());
+		    mapped_chunk_names.add(reply.get_chunk_name());
+		    chunk_names.remove(0);  
+		// else: mark node as unavailable
+		} catch (UnknownHostException e) {
+		    e.printStackTrace();
+		    this.remove_node(add);
+		} catch (IOException e) {
+		    e.printStackTrace();
+		    this.remove_node(add);
+		} catch (ClassNotFoundException e) {
+		    e.printStackTrace();
+		    this.remove_node(add);
+		} finally {
+		    timer.cancel();
+		}	    
+	    }
+
 	  /*
 	  Logic:
 	  while chunk_names is non-empty and time < timeout:
@@ -105,8 +168,16 @@ public class Master {
 	  mark its last work as done (remove it from chunk_names).
 	  then send it a new task. 
 
-	  should probably return true/false to indicate success or failure. 
+	  Use blocking queue?
+
 	 */   
+	}
+	if (chunk_names.size() == 0) {
+	    System.out.println(" [MR] Map successful!");
+	    return mapped_chunk_names; // work completed
+	} else { 
+	    System.out.println(" [MR] Map unsuccessful: tasks not fully completed :(");
+	    return null; // computation timed out
 	}
     }
 
@@ -121,11 +192,21 @@ public class Master {
 	    this.add_node(msg, ois, oos);
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.GREETING_REPLY);
 	}
+	if (mt == Constants.MESSAGE_TYPE.KADOOP_GREETING) {
+	    System.out.println(" [MR] > Processing KADOOP_GREETING");
+	    reply.set_msg_type(Constants.MESSAGE_TYPE.GREETING_REPLY);
+	}
 	if (mt == Constants.MESSAGE_TYPE.ASSIGN_MAPS) {
 	    System.out.println(" [MR] > Processing ASSIGN_MAPS");
 	    String class_name = msg.get_class_name();
 	    ArrayList<ChunkName> chunk_names = msg.get_chunk_names();
-	    this.assign(chunk_names, class_name);
+	    ArrayList<ChunkName> mapped_chunk_names = this.assign(chunk_names, class_name);
+	    boolean success = (!(mapped_chunk_names == null));
+	    if (success) {
+		System.out.println(" [MR] Map successful!");
+	    }
+	    reply.set_success(success);
+	    reply.set_chunk_names(mapped_chunk_names);
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.ASSIGN_MAPS_REPLY);
 	}
 	// TODO: respond to other message types here
@@ -152,6 +233,7 @@ public class Master {
 		    System.out.println(" [MR] > Received message!");
 		    Msg reply = this.process(msg, ois, oos);
 		    oos.writeObject(reply);
+		    oos.flush();
 		} catch (ClassNotFoundException e) {
 		    e.printStackTrace();
 		} catch (IOException e) {

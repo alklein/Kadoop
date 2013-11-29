@@ -117,6 +117,9 @@ public class NameNode {
 	return s;
     }
 
+    /*
+      Send message to a DataNode.
+     */
     private Msg send_to_DN(Msg m, Address a) throws UnknownHostException, IOException, ClassNotFoundException {
 	System.out.println(" [NN] > Attempting to reach DataNode at IP " + a.get_IP() + " and port " + Integer.toString(a.get_port()));
 	oos_map.get(a).writeObject(m);

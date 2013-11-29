@@ -8,10 +8,11 @@ public class Constants {
     public static final int MASTER_PORT = 15640;
     public static final int KADOOP_PORT = 11111;
 
-    public static final int MAP_TIMEOUT = 10000; // in milliseconds
+    public static final int MAP_TIMEOUT_TOTAL = 10000; // 10 s (in milliseconds)
+    public static final int MAP_TIMEOUT_NODE = 1000; // 1 s (in milliseconds)
    
     public enum MESSAGE_TYPE {
-	DATANODE_GREETING, CLIENT_GREETING, COMPUTENODE_GREETING, GREETING_REPLY, 
+	DATANODE_GREETING, CLIENT_GREETING, COMPUTENODE_GREETING, KADOOP_GREETING, GREETING_REPLY, 
 	    MAP, MAP_REPLY, 
 	    REDUCE, REDUCE_REPLY,
 	    ASSIGN_MAPS, ASSIGN_MAPS_REPLY,

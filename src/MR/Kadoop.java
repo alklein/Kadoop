@@ -89,15 +89,15 @@ public class Kadoop {
      */
     private static Msg communicate(Msg msg)
     {
-    	Socket sock;
+    	Socket my_sock;
     	Msg ret_msg = null;
 	try {
-	    sock = new Socket(Master_IP, Master_Port);
-	    ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
-	    ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());	    
-	    oos.writeObject(msg);
-	    ret_msg = (Msg) ois.readObject();	    
-	    sock.close();
+	    my_sock = new Socket(Master_IP, Master_Port);
+	    ObjectOutputStream my_oos = new ObjectOutputStream(sock.getOutputStream());
+	    ObjectInputStream my_ois = new ObjectInputStream(sock.getInputStream());	    
+	    my_oos.writeObject(msg);
+	    ret_msg = (Msg) my_ois.readObject();	    
+	    my_sock.close();
 	} catch (UnknownHostException e) {
 	    e.printStackTrace();
 	} catch (IOException e) {
@@ -181,12 +181,16 @@ public class Kadoop {
     /*
       Receives messages from the Master.
     */
-    public static Msg listen_to_Master() throws IOException, ClassNotFoundException {
-	ois = new ObjectInputStream(sock.getInputStream());	
+    public Msg listen_to_Master() throws IOException, ClassNotFoundException {
 	while (true) { 
 	    System.out.println(" [K] > Listening for messages...");
 	    Msg msg = (Msg) ois.readObject();
 	    System.out.println(" [K] > Received a message!");
+	    if (msg.get_msg_type() == Constants.MESSAGE_TYPE.ASSIGN_MAPS_REPLY) {
+		System.out.println(" [K] > Message type: ASSIGN_MAPS_REPLY");
+	    } else {
+		System.out.println(" [K] > Message type: " + msg.type_as_string());
+	    }
 	    return msg;
 	}
     }
@@ -194,32 +198,42 @@ public class Kadoop {
     /*
       Sends message to Master.
     */
-    private static void write_to_Master(Msg m) throws IOException, ClassNotFoundException {
+    private void write_to_Master(Msg m) throws IOException, ClassNotFoundException {
 	oos.writeObject(m);
 	oos.flush();
     }
 
-    // TODO: implement
-    private static ArrayList<ChunkName> perform_map(ArrayList<ChunkName> chunk_names, String mapper_classname) {
+    private ArrayList<ChunkName> perform_map(ArrayList<ChunkName> chunk_names, String mapper_classname) {
+	boolean success = false;
 	ArrayList<ChunkName> result = null;
 	Msg msg = new Msg();
 	msg.set_msg_type(Constants.MESSAGE_TYPE.ASSIGN_MAPS);
 	msg.set_chunk_names(chunk_names);
 	msg.set_class_name(mapper_classname);	
 	try {
-	    write_to_Master(msg);
-	    Msg reply = listen_to_Master(); 
+	    System.out.println(" [K] > Dispatching jobs to Master node...");
+	    String MASTER_IP = this.read_Master_IP();
+	    sock = new Socket(MASTER_IP, UTILS.Constants.MASTER_PORT);
+	    oos = new ObjectOutputStream(sock.getOutputStream());
+	    ois = new ObjectInputStream(sock.getInputStream());
+	    this.write_to_Master(msg);
+	    Msg reply = this.listen_to_Master(); 
+	    success = reply.get_success();
 	    result = reply.get_chunk_names(); // names of mapped files
 	} catch (IOException e) {
             e.printStackTrace();
 	} catch (ClassNotFoundException e) {
             e.printStackTrace();
 	}
-	return result;
+	if (success) {
+	    return result;
+	} else {
+	    return null;
+	}
     }
 
     // TODO: implement
-    private static String perform_reduce(ArrayList<ChunkName> mapped_chunk_names, String reducer_classname) {
+    private String perform_reduce(ArrayList<ChunkName> mapped_chunk_names, String reducer_classname) {
 	String result = "";
 	return result;
     }
@@ -239,10 +253,13 @@ public class Kadoop {
 	    String MASTER_IP = this.read_Master_IP();
 	    sock = new Socket(MASTER_IP, UTILS.Constants.MASTER_PORT);
 	    oos = new ObjectOutputStream(sock.getOutputStream());
+	    ois = new ObjectInputStream(sock.getInputStream());
 	    Msg greeting = new Msg();
-	    greeting.set_msg_type(Constants.MESSAGE_TYPE.COMPUTENODE_GREETING);
+	    greeting.set_msg_type(Constants.MESSAGE_TYPE.KADOOP_GREETING);
 	    greeting.set_return_address(my_address);
 	    this.write_to_Master(greeting);
+	    Msg reply = this.listen_to_Master(); 
+	    System.out.println(" [K] > Received greeting reply from Master");
 	} catch (UnknownHostException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -297,8 +314,13 @@ public class Kadoop {
 	if (cont) {
 	    System.out.println(" ~~~ EXECUTING MAP PHASE...");
 	    mapped_chunk_names = _k.perform_map(chunk_names, mapper_classname);
-	    System.out.println(" ~~~ MAP PHASE COMPLETE. CONTENTS OF DFS:");
-	    print_arr_list(ap.ls());
+	    if (mapped_chunk_names != null) {
+		System.out.println(" ~~~ MAP PHASE COMPLETE. CONTENTS OF DFS:");
+		print_arr_list(ap.ls());
+	    } else {
+		System.out.println(" ~~~ MAP PHASE FAILED. SHUTTING DOWN COMPUTATION.");
+		cont = false;
+	    }
 	}
 	if (cont) {
 	    outfile_name = _k.perform_reduce(mapped_chunk_names, reducer_classname);

@@ -12,6 +12,36 @@ public class Msg implements java.io.Serializable {
     private ArrayList<String> arr_list = null;
     private ArrayList<ChunkName> chunk_names = null;
     private String class_name = null;
+    private boolean success = false;
+
+    public String type_as_string() {
+	MESSAGE_TYPE mt = this.msg_type;
+	if (mt == Constants.MESSAGE_TYPE.DATANODE_GREETING) {
+	    return "DATANODE_GREETING";
+	}
+	if (mt == Constants.MESSAGE_TYPE.CLIENT_GREETING) {
+	    return "CLIENT_GREETING";
+	}
+	if (mt == Constants.MESSAGE_TYPE.COMPUTENODE_GREETING) {
+	    return "COMPUTENODE_GREETING";
+	}
+	if (mt == Constants.MESSAGE_TYPE.KADOOP_GREETING) {
+	    return "KADOOP_GREETING";
+	}
+	if (mt == Constants.MESSAGE_TYPE.GREETING_REPLY) {
+	    return "GREETING_REPLY";
+	}
+	if (mt == Constants.MESSAGE_TYPE.MAP) {
+	    return "MAP";
+	}
+	if (mt == Constants.MESSAGE_TYPE.MAP_REPLY) {
+	    return "MAP_REPLY";
+	}
+	if (mt == null) {
+	    return "NULL";
+	}
+	return "UNKNOWN";
+    }
 
     public void set_msg_type(MESSAGE_TYPE tp)
     {
@@ -69,6 +99,14 @@ public class Msg implements java.io.Serializable {
 
     public String get_class_name() {
 	return this.class_name;
+    }
+
+    public void set_success(boolean s) {
+	this.success = s;
+    }
+
+    public boolean get_success() {
+	return this.success;
     }
 
 }
