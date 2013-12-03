@@ -139,6 +139,21 @@ public class ComputeNode {
 		e.printStackTrace();
 	    }
 	} 
+	if (mt == Constants.MESSAGE_TYPE.REDUCE) {
+	    // TEMP: do nothing, but do reply
+	    Msg reply = new Msg();
+	    reply.set_msg_type(Constants.MESSAGE_TYPE.REDUCE_REPLY);
+	    reply.set_return_address(my_address);
+	    try {
+		this.write_to_Master(reply);
+	    } catch (IOException e) {
+		e.printStackTrace();
+	    }
+	    catch (ClassNotFoundException e) {
+		e.printStackTrace();
+	    }
+
+	}
     }
 
     /*

@@ -112,7 +112,7 @@ public class Master {
       Naive assignment of tasks to ComputeNodes. 
       TODO: parallelize; exploit locality in disc mode. 
      */
-    private ArrayList<ChunkName> assign(ArrayList<ChunkName> chunk_names, String class_name) {
+    private ArrayList<ChunkName> assign_map(ArrayList<ChunkName> chunk_names, String class_name) {
 	System.out.println(" [MR] Trying to assign this many chunk maps: " + Integer.toString(chunk_names.size())); 
 	ArrayList<ChunkName> mapped_chunk_names = new ArrayList<ChunkName>();
 	long timeoutExpiredMs = System.currentTimeMillis() + UTILS.Constants.MAP_TIMEOUT_TOTAL;	
@@ -142,7 +142,7 @@ public class Master {
 		    Msg reply = this.send_to_CN(m, add);
 		    // if success: record name of mapped chunk;
 		    // remove current chunk from chunk_names
-		    System.out.println(" [MR] Map completed by ComputeNode. Name of mapped file: " + reply.get_chunk_name());
+		    System.out.println(" [MR] Map completed by ComputeNode. Name of mapped file: " + reply.get_chunk_name().to_String());
 		    mapped_chunk_names.add(reply.get_chunk_name());
 		    chunk_names.remove(0);  
 		// else: mark node as unavailable
@@ -181,6 +181,66 @@ public class Master {
 	}
     }
 
+    private ChunkName assign_reduce(ArrayList<ChunkName> mapped_chunk_names, String class_name) {
+	System.out.println(" [MR] Trying to assign this many chunk reduces: " + Integer.toString(mapped_chunk_names.size())); 
+	ChunkName reduced_chunk_name = null;
+	long timeoutExpiredMs = System.currentTimeMillis() + UTILS.Constants.MAP_TIMEOUT_TOTAL;	// use same timeout as map phase
+	while (mapped_chunk_names.size() > 0) {
+	    // check timeout condition	  
+	    if (System.currentTimeMillis() >= timeoutExpiredMs) {
+		    System.out.println(" [MR] Reduce computation timed out before completion :(");
+		    break;
+	    }  
+	    for (Address add : ois_map.keySet()) {
+		// check timeout condition
+		if (System.currentTimeMillis() >= timeoutExpiredMs) {
+		    break;
+		}
+
+		// try to dispatch entire task to first node
+		Msg m = new Msg();
+		m.set_msg_type(Constants.MESSAGE_TYPE.REDUCE);
+		m.set_chunk_names(mapped_chunk_names);
+		m.set_class_name(class_name);
+		Timer timer = new Timer(true);
+		//InterruptTimerTask interruptTimerTask = new InterruptTimerTask(Thread.currentThread());
+		IRR interruptTimerTask = new IRR(Thread.currentThread());
+		timer.schedule(interruptTimerTask, UTILS.Constants.MAP_TIMEOUT_NODE);
+		try {		    
+		    Msg reply = this.send_to_CN(m, add);
+		    // if success: record name of mapped chunk;
+		    // remove current chunk from chunk_names
+		    if (reply.get_chunk_name() != null) {
+			System.out.println(" [MR] Reduce completed by ComputeNode. Name of reduced file: " + reply.get_chunk_name().to_String());
+		    }
+		    reduced_chunk_name = reply.get_chunk_name();
+		    mapped_chunk_names = new ArrayList<ChunkName>(); // empty
+		    break;
+		// else: mark node as unavailable
+		} catch (UnknownHostException e) {
+		    e.printStackTrace();
+		    this.remove_node(add);
+		} catch (IOException e) {
+		    e.printStackTrace();
+		    this.remove_node(add);
+		} catch (ClassNotFoundException e) {
+		    e.printStackTrace();
+		    this.remove_node(add);
+		} finally {
+		    timer.cancel();
+		}	    
+	    }
+	}
+	if (mapped_chunk_names.size() == 0) {
+	    System.out.println(" [MR] Reduce successful!");
+	    return reduced_chunk_name; // work completed
+	} else { 
+	    System.out.println(" [MR] Reduce unsuccessful: tasks not fully completed :(");
+	    return null; // computation timed out
+	}
+
+    }
+
     /*
       Parses and processes incoming messages.
      */
@@ -200,15 +260,23 @@ public class Master {
 	    System.out.println(" [MR] > Processing ASSIGN_MAPS");
 	    String class_name = msg.get_class_name();
 	    ArrayList<ChunkName> chunk_names = msg.get_chunk_names();
-	    ArrayList<ChunkName> mapped_chunk_names = this.assign(chunk_names, class_name);
+	    ArrayList<ChunkName> mapped_chunk_names = this.assign_map(chunk_names, class_name);
 	    boolean success = (!(mapped_chunk_names == null));
-	    if (success) {
-		System.out.println(" [MR] Map successful!");
-	    }
 	    reply.set_success(success);
 	    reply.set_chunk_names(mapped_chunk_names);
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.ASSIGN_MAPS_REPLY);
 	}
+	if (mt == Constants.MESSAGE_TYPE.ASSIGN_REDUCES) {
+	    System.out.println(" [MR] > Processing ASSIGN_REDUCES");
+	    String class_name = msg.get_class_name();
+	    ArrayList<ChunkName> mapped_chunk_names = msg.get_chunk_names();
+	    ChunkName reduced_chunk_name = this.assign_reduce(mapped_chunk_names, class_name);
+	    boolean success = (!(reduced_chunk_name == null));
+	    reply.set_success(success);
+	    reply.set_chunk_name(reduced_chunk_name);
+	    reply.set_msg_type(Constants.MESSAGE_TYPE.ASSIGN_REDUCES_REPLY);
+	}
+
 	// TODO: respond to other message types here
 	return reply;
     }
