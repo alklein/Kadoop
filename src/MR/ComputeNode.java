@@ -141,7 +141,7 @@ public class ComputeNode {
 
 	    String data = "";
 	    for (int i=0; i < lines.size(); i++) {
-		data += lines.get(i);
+		data += lines.get(i) + "\n";
 	    }
 	    Chunk c = new Chunk();
 	    c.set_name(sorted_name);
@@ -184,6 +184,7 @@ public class ComputeNode {
 	    String class_name = msg.get_class_name();
 	    String data = ap.read_chunk(n);
 	    String result = this.perform_map(data, class_name);
+	    System.out.println(" [CN] Result of map: " + result); // TEMP
 	    ChunkName new_name = n;
 	    new_name.set_filename(n.get_filename() + "_mapped");
 	    Chunk c = new Chunk();

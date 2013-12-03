@@ -15,6 +15,8 @@ public class WordCount_Reducer extends MR.Reducer {
 
 	String prev = "";
 	String cur = "";
+	String cur_word = "";
+	String prev_word = "";
 	int cur_count = 0;
 
 	UTILS.ChunkName n;
@@ -35,24 +37,36 @@ public class WordCount_Reducer extends MR.Reducer {
 
 	    for (int j=0; j < lines.length; j++) {
 		cur = lines[j];
+		String split_line[] = cur.split("\\s+");
+		cur_word = split_line[0];
+		System.out.println(" -- Data: " + data); // TEMP
+		System.out.println(" -- Current line: " + cur); // TEMP
+		System.out.println(" -- Current word: " + cur_word + "\n"); // TEMP
 		if (cur.equals(prev)) { 
 		    // word seen again: increment count
 		    cur_count += 1;
+		    System.out.println(" ---- Word seen again"); // TEMP
 		} else if (cur_count == 0) { 
 		    // beginning end case
+		    prev = cur;
 		    cur_count += 1;
+		    System.out.println(" ---- Beginning edge case"); // TEMP
 		} else {
 		    // new word: output old word and its total count
-		    String output = cur + " " + Integer.toString(cur_count) + "\n";
+		    //String output = cur_word + " " + Integer.toString(cur_count) + "\n";
+		    String prev_split_line[] = prev.split("\\s+");
+		    prev_word = prev_split_line[0];
+		    String output = prev_word + " " + Integer.toString(cur_count) + "\n";
 		    result += output;
 		    prev = cur;
 		    cur_count = 1;
+		    System.out.println(" ---- Outputting word: " + prev_word); // TEMP
 		}
 	    }
 	}
 
 	// end edge case:
-	String output = cur + " " + Integer.toString(cur_count) + "\n";
+	String output = cur_word + " " + Integer.toString(cur_count) + "\n";
 	result += output;
 
 	return result;
