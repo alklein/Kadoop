@@ -362,14 +362,27 @@ public class Kadoop {
 	} catch (ClassNotFoundException e) {
 	    e.printStackTrace();
 	}
-	// TODO: process command-line input from user
 
-	// TEMP:
+	// TODO: process continuous command-line input from user
+	if (args.length < 3)
+	    {
+		System.out.println(" ~~~ ERROR: PROBLEM WITH ARGUMENTS");
+		return;
+	    }
+
+	String data_filename = args[0];
+	String mapper_classname = args[1];
+	String reducer_classname = args[2];
+	int num_chunks = Integer.parseInt(args[3]);
+	_k.run_job(data_filename, mapper_classname, reducer_classname, num_chunks, true);
+
+	/*
 	String data_filename = "data.txt";
 	String mapper_classname = "WordCount_Mapper";
 	String reducer_classname = "WordCount_Reducer";
 	int num_chunks = 3;
-	_k.run_job(data_filename, mapper_classname, reducer_classname, num_chunks, true);
+	*/
+
     }
 
 }

@@ -20,11 +20,11 @@ Kadoop is a map-reduce framework with custom distributed file system.
   > ./start.sh 
   
 * Press return if necessary, then run Kadoop: 
-  > java MR/Kadoop
+  > java MR/Kadoop [args]
 
 ## Examples
 
-* Coming soon...
+* java MR/Kadoop data.txt WordCount_Mapper WordCount_Reducer 3
 
 ## Cleaning Up
 
