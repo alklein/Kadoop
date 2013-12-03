@@ -9,7 +9,7 @@ public abstract class Reducer {
     /*
     Reduce function to be implemented by client.
     */
-    public abstract String reduce(ArrayList<String> sorted_filenames, ArrayList<String> sorted_chunkIDs);
+    public abstract String reduce(ArrayList<String> sorted_filenames, ArrayList<String> sorted_chunkIDs, boolean verbose);
 
     /*
     Takes a list of filenames. Each is an output from a mapper.
@@ -23,15 +23,19 @@ public abstract class Reducer {
     Takes a list of filenames. Each is an output from a mapper.
     Performs an in-memory merge sort on the mapped data to create a single file, single chunk.
     */
-    public ArrayList<String> sort(ArrayList<String> lines) {
-	System.out.println("Lines before sorting:");
-	for (int i=0; i < lines.size(); i++) {
-	    System.out.println(lines.get(i));
+    public ArrayList<String> sort(ArrayList<String> lines, boolean verbose) {
+	if (verbose) {
+	    System.out.println("Lines before sorting:");
+	    for (int i=0; i < lines.size(); i++) {
+		System.out.println(lines.get(i));
+	    }
 	}
 	Collections.sort(lines);
-	System.out.println("Lines after sorting:");
-	for (int i=0; i < lines.size(); i++) {
-	    System.out.println(lines.get(i));
+	if (verbose) {
+	    System.out.println("Lines after sorting:");
+	    for (int i=0; i < lines.size(); i++) {
+		System.out.println(lines.get(i));
+	    }
 	}
 	return lines;
     }
@@ -39,9 +43,9 @@ public abstract class Reducer {
     /*
     Sorts and reduces mapped data.
     */
-    public String run(ArrayList<String> mapped_filenames, ArrayList<String> mapped_chunkIDs, ArrayList<String> sorted_filenames, ArrayList<String> sorted_chunkIDs) {
+    public String run(ArrayList<String> mapped_filenames, ArrayList<String> mapped_chunkIDs, ArrayList<String> sorted_filenames, ArrayList<String> sorted_chunkIDs, boolean verbose) {
 	external_merge_sort(mapped_filenames, mapped_chunkIDs);
-	return reduce(sorted_filenames, sorted_chunkIDs);
+	return reduce(sorted_filenames, sorted_chunkIDs, verbose);
     }
 
 }

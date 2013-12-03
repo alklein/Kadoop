@@ -292,8 +292,67 @@ public class Kadoop {
     }
 
 
-    public static void main(String args[])
-    {
+    public void run_job(String data_filename, String mapper_classname, String reducer_classname, int num_chunks, boolean verbose) {
+	ArrayList<ChunkName> chunk_names = null;
+	ArrayList<ChunkName> mapped_chunk_names = null;
+	String outfile_name = null;
+
+	boolean cont = true;
+	try {
+	    System.out.println(" ~~~ INITIALIZING DATA...");
+	    chunk_names = this.init_data(data_filename, num_chunks);
+	    System.out.println(" ~~~ INITIALIZATION COMPLETE. CONTENTS OF DFS:");
+	    print_arr_list(ap.ls());
+	    if (verbose) {
+		for (int i=0; i < chunk_names.size(); i++) {
+		    ChunkName current = chunk_names.get(i);
+		    String name = current.get_filename();
+		    String chunk_ID = current.get_chunkID();
+		    System.out.println("Filename: " + name + " chunkID: " + chunk_ID);
+		    String d = ap.read_chunk(current);
+		    System.out.println(" ... Data: \n" + d);
+		}
+	    }
+	} catch (IOException e) {
+	    System.out.println(" ~~~ INITIALIZATION FAILED. SHUTTING DOWN COMPUTATION.");
+	    cont = false;
+	}
+	if (cont) {
+	    System.out.println(" ~~~ EXECUTING MAP PHASE...");
+	    mapped_chunk_names = this.perform_map(chunk_names, mapper_classname);
+	    if (mapped_chunk_names != null) {
+		System.out.println(" ~~~ MAP PHASE COMPLETE. CONTENTS OF DFS:");
+		print_arr_list(ap.ls());
+		if (verbose) {
+		    for (int i=0; i < chunk_names.size(); i++) {
+			ChunkName current = chunk_names.get(i);
+			String name = current.get_filename();
+			String chunk_ID = current.get_chunkID();
+			System.out.println(" Filename: " + name + " chunkID: " + chunk_ID);
+		    }
+		    for (int i=0; i < mapped_chunk_names.size(); i++) {
+			ChunkName current = mapped_chunk_names.get(i);
+			String name = current.get_filename();
+			String chunk_ID = current.get_chunkID();
+			System.out.println("Filename: " + name + " chunkID: " + chunk_ID);
+			String d = ap.read_chunk(current);
+			System.out.println(" ... Data: " + d);
+		    }
+		}
+	    } else {
+		System.out.println(" ~~~ MAP PHASE FAILED. SHUTTING DOWN COMPUTATION.");
+		cont = false;
+	    }
+	}
+	if (cont) {
+	    ChunkName outfile = this.perform_reduce(mapped_chunk_names, reducer_classname);
+	    System.out.println(" ~~~ COMPUTATION COMPLETE. OUTFILE: " + outfile.to_String());
+	    String d = ap.read_chunk(outfile);
+	    System.out.println(" Final data: \n" + d);
+	}
+    }    
+
+    public static void main(String args[]) {
 	System.out.println(" ~~~ WELCOME TO KADOOP! ~~~");
 	Kadoop _k = Kadoop.getInstance(UTILS.Constants.KADOOP_PORT);
 	try {
@@ -310,60 +369,7 @@ public class Kadoop {
 	String mapper_classname = "WordCount_Mapper";
 	String reducer_classname = "WordCount_Reducer";
 	int num_chunks = 3;
-
-	ArrayList<ChunkName> chunk_names = null;
-	ArrayList<ChunkName> mapped_chunk_names = null;
-	String outfile_name = null;
-
-	boolean cont = true;
-	try {
-	    System.out.println(" ~~~ INITIALIZING DATA...");
-	    chunk_names = _k.init_data(data_filename, num_chunks);
-	    System.out.println(" ~~~ INITIALIZATION COMPLETE. CONTENTS OF DFS:");
-	    print_arr_list(ap.ls());
-	    for (int i=0; i < chunk_names.size(); i++) {
-		ChunkName current = chunk_names.get(i);
-		String name = current.get_filename();
-		String chunk_ID = current.get_chunkID();
-		System.out.println("Filename: " + name + " chunkID: " + chunk_ID);
-		String d = ap.read_chunk(current);
-		System.out.println(" ... Data: " + d);
-	    }
-	} catch (IOException e) {
-	    System.out.println(" ~~~ INITIALIZATION FAILED. SHUTTING DOWN COMPUTATION.");
-	    cont = false;
-	}
-	if (cont) {
-	    System.out.println(" ~~~ EXECUTING MAP PHASE...");
-	    mapped_chunk_names = _k.perform_map(chunk_names, mapper_classname);
-	    if (mapped_chunk_names != null) {
-		System.out.println(" ~~~ MAP PHASE COMPLETE. CONTENTS OF DFS:");
-		print_arr_list(ap.ls());
-		for (int i=0; i < chunk_names.size(); i++) {
-		    ChunkName current = chunk_names.get(i);
-		    String name = current.get_filename();
-		    String chunk_ID = current.get_chunkID();
-		    System.out.println("Filename: " + name + " chunkID: " + chunk_ID);
-		}
-		for (int i=0; i < mapped_chunk_names.size(); i++) {
-		    ChunkName current = mapped_chunk_names.get(i);
-		    String name = current.get_filename();
-		    String chunk_ID = current.get_chunkID();
-		    System.out.println("Filename: " + name + " chunkID: " + chunk_ID);
-		    String d = ap.read_chunk(current);
-		    System.out.println(" ... Data: " + d);
-		}
-	    } else {
-		System.out.println(" ~~~ MAP PHASE FAILED. SHUTTING DOWN COMPUTATION.");
-		cont = false;
-	    }
-	}
-	if (cont) {
-	    ChunkName outfile = _k.perform_reduce(mapped_chunk_names, reducer_classname);
-	    System.out.println(" ~~~ COMPUTATION COMPLETE. OUTFILE: " + outfile.to_String());
-	    String d = ap.read_chunk(outfile);
-	    System.out.println(" Final data: " + d);
-	}
+	_k.run_job(data_filename, mapper_classname, reducer_classname, num_chunks, true);
     }
 
 }

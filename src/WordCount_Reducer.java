@@ -9,7 +9,7 @@ public class WordCount_Reducer extends MR.Reducer {
     int port = 1001;
     private AccessPoint ap = new AccessPoint(port);
 
-    public String reduce(ArrayList<String> sorted_filenames, ArrayList<String> sorted_chunkIDs) {
+    public String reduce(ArrayList<String> sorted_filenames, ArrayList<String> sorted_chunkIDs, boolean verbose) {
 
 	String result = "";
 
@@ -39,28 +39,37 @@ public class WordCount_Reducer extends MR.Reducer {
 		cur = lines[j];
 		String split_line[] = cur.split("\\s+");
 		cur_word = split_line[0];
-		System.out.println(" -- Data: " + data); // TEMP
-		System.out.println(" -- Current line: " + cur); // TEMP
-		System.out.println(" -- Current word: " + cur_word + "\n"); // TEMP
+		if (verbose) {
+		    System.out.println(" -- Data: " + data); // TEMP
+		    System.out.println(" -- Current line: " + cur); // TEMP
+		    System.out.println(" -- Current word: " + cur_word + "\n"); // TEMP
+		}
 		if (cur.equals(prev)) { 
 		    // word seen again: increment count
 		    cur_count += 1;
-		    System.out.println(" ---- Word seen again"); // TEMP
+		    if (verbose) {
+			System.out.println(" ---- Word seen again"); // TEMP
+		    }
 		} else if (cur_count == 0) { 
 		    // beginning end case
 		    prev = cur;
 		    cur_count += 1;
-		    System.out.println(" ---- Beginning edge case"); // TEMP
+		    if (verbose) {
+			System.out.println(" ---- Beginning edge case"); // TEMP
+		    }
 		} else {
-		    // new word: output old word and its total count
-		    //String output = cur_word + " " + Integer.toString(cur_count) + "\n";
+		    // new word: output old word and its total count, if old word is not blank
 		    String prev_split_line[] = prev.split("\\s+");
 		    prev_word = prev_split_line[0];
-		    String output = prev_word + " " + Integer.toString(cur_count) + "\n";
-		    result += output;
+		    if (prev_word.length() > 0) {
+			String output = prev_word + " " + Integer.toString(cur_count) + "\n";
+			result += output;
+		    }
 		    prev = cur;
 		    cur_count = 1;
-		    System.out.println(" ---- Outputting word: " + prev_word); // TEMP
+		    if (verbose) {
+			System.out.println(" ---- Outputting word: " + prev_word); // TEMP
+		    }
 		}
 	    }
 	}
@@ -68,6 +77,9 @@ public class WordCount_Reducer extends MR.Reducer {
 	// end edge case:
 	String output = cur_word + " " + Integer.toString(cur_count) + "\n";
 	result += output;
+	if (verbose) {
+	    System.out.println(" ---- Outputting word: " + cur_word); // TEMP
+	}
 
 	return result;
     }

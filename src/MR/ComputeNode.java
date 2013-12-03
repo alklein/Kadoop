@@ -132,7 +132,7 @@ public class ComputeNode {
 	try {
 	    Class myClass = Class.forName(class_name);
 	    Reducer r = (Reducer)myClass.newInstance();
-	    ArrayList<String> sorted_lines = r.sort(lines);
+	    ArrayList<String> sorted_lines = r.sort(lines, false);
 
 	    ChunkName sorted_name = mapped_chunk_names.get(0);
 	    String old_filename = sorted_name.get_filename();
@@ -152,7 +152,7 @@ public class ComputeNode {
 	    ArrayList<String> sorted_chunkIDs = new ArrayList<String>();
 	    sorted_filenames.add(sorted_filename);
 	    sorted_chunkIDs.add(sorted_name.get_chunkID());
-	    String reduced_data = r.reduce(sorted_filenames, sorted_chunkIDs);
+	    String reduced_data = r.reduce(sorted_filenames, sorted_chunkIDs, false);
 
 	    ChunkName reduced_name = sorted_name;
 	    reduced_name.set_filename(sorted_name.get_filename() + "_reduced");
@@ -184,7 +184,6 @@ public class ComputeNode {
 	    String class_name = msg.get_class_name();
 	    String data = ap.read_chunk(n);
 	    String result = this.perform_map(data, class_name);
-	    System.out.println(" [CN] Result of map: " + result); // TEMP
 	    ChunkName new_name = n;
 	    new_name.set_filename(n.get_filename() + "_mapped");
 	    Chunk c = new Chunk();
