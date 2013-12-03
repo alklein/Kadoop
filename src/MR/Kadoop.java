@@ -233,7 +233,7 @@ public class Kadoop {
     }
 
     // TODO: implement
-    private String perform_reduce(ArrayList<ChunkName> mapped_chunk_names, String reducer_classname) {
+    private ChunkName perform_reduce(ArrayList<ChunkName> mapped_chunk_names, String reducer_classname) {
 	boolean success = false;
 	ChunkName result = null;
 	Msg msg = new Msg();
@@ -256,9 +256,9 @@ public class Kadoop {
             e.printStackTrace();
 	}
 	if (success) {
-	    return result.to_String();
+	    return result;
 	} else {
-	    return "";
+	    return null;
 	}
     }
 
@@ -359,8 +359,10 @@ public class Kadoop {
 	    }
 	}
 	if (cont) {
-	    outfile_name = _k.perform_reduce(mapped_chunk_names, reducer_classname);
-	    System.out.println(" ~~~ COMPUTATION COMPLETE. OUTFILE: " + outfile_name);
+	    ChunkName outfile = _k.perform_reduce(mapped_chunk_names, reducer_classname);
+	    System.out.println(" ~~~ COMPUTATION COMPLETE. OUTFILE: " + outfile.to_String());
+	    String d = ap.read_chunk(outfile);
+	    System.out.println(" Final data: " + d);
 	}
     }
 

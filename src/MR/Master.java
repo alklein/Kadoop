@@ -276,8 +276,6 @@ public class Master {
 	    reply.set_chunk_name(reduced_chunk_name);
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.ASSIGN_REDUCES_REPLY);
 	}
-
-	// TODO: respond to other message types here
 	return reply;
     }
 
