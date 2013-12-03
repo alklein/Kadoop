@@ -16,6 +16,8 @@ import java.io.ObjectOutputStream;
 
 public class NameNode {
 
+    static boolean verbose = false;
+
     static String IP_file = "NN_IP.txt";
     static String host;
     static int port;
@@ -58,12 +60,18 @@ public class NameNode {
 	    e.printStackTrace();	    
 	}
 	this.record_IP(host);
-	System.out.println(" [NN] > NameNode started with host address: " + host);
-	try {
+	if (verbose) {
+	    System.out.println(" [NN] > NameNode started with host address: " + host);
+	}
+	try {	   
 	    listener = new ServerSocket(port);
-	    System.out.println(" [NN] > NameNode started with port: " + Integer.toString(port));
+	    if (verbose) {
+		System.out.println(" [NN] > NameNode started with port: " + Integer.toString(port));
+	    }
 	} catch (IOException e) {
-	    System.out.println(" [NN] > Failed to start NameNode :(");
+	    if (verbose) {
+		System.out.println(" [NN] > Failed to start NameNode :(");
+	    }
 	    e.printStackTrace();	    
 	}
 
@@ -121,7 +129,9 @@ public class NameNode {
       Send message to a DataNode.
      */
     private Msg send_to_DN(Msg m, Address a) throws UnknownHostException, IOException, ClassNotFoundException {
-	System.out.println(" [NN] > Attempting to reach DataNode at IP " + a.get_IP() + " and port " + Integer.toString(a.get_port()));
+	if (verbose) {
+	    System.out.println(" [NN] > Attempting to reach DataNode at IP " + a.get_IP() + " and port " + Integer.toString(a.get_port()));
+	}
 	oos_map.get(a).writeObject(m);
 	Msg ret_msg = (Msg) ois_map.get(a).readObject();	    
 	return ret_msg;
@@ -161,7 +171,9 @@ public class NameNode {
     private void assign_chunk(ChunkName n, String d) {
 
 	int rep_count = 0;
-	System.out.println(" [NN] >>> Number of available nodes: " + Integer.toString(available_nodes.size())); // temp
+	if (verbose) {
+	    System.out.println(" [NN] >>> Number of available nodes: " + Integer.toString(available_nodes.size())); // temp
+	}
 
 	// options lists DataNodes that don't already host this content. 
 	// Maps from address to current load.
@@ -181,10 +193,14 @@ public class NameNode {
 		options.put(add, load.size());
 	    }
 	}
-	System.out.println(" [NN] >>> Number of options: " + Integer.toString(options.size())); // temp
+	if (verbose) {
+	    System.out.println(" [NN] >>> Number of options: " + Integer.toString(options.size())); // temp
+	}
 	// sort options by current load. store chunk on least busy node(s)
 	ArrayList<Address> sorted_options = this.sort_by_load(options);
-	System.out.println(" [NN] >>> Number of sorted options: " + Integer.toString(sorted_options.size())); // temp
+	if (verbose) {
+	    System.out.println(" [NN] >>> Number of sorted options: " + Integer.toString(sorted_options.size())); // temp
+	}
 	for (int i=0; i < sorted_options.size(); i++) {
 	    if (rep_count >= rep_factor) {
 		break;
@@ -305,29 +321,39 @@ public class NameNode {
 	Msg reply = new Msg();
 	UTILS.Constants.MESSAGE_TYPE mt = msg.get_msg_type();
 	if (mt == Constants.MESSAGE_TYPE.DATANODE_GREETING) {
-	    System.out.println(" [NN] > Processing DATANODE_GREETING");
+	    if (verbose) {
+		System.out.println(" [NN] > Processing DATANODE_GREETING");
+	    }
 	    this.add_node(msg, ois, oos);
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.GREETING_REPLY);
 	}
 	if (mt == Constants.MESSAGE_TYPE.CLIENT_GREETING) {
-	    System.out.println(" [NN] > Processing CLIENT_GREETING");
+	    if (verbose) {
+		System.out.println(" [NN] > Processing CLIENT_GREETING");
+	    }
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.GREETING_REPLY);
 	}
 	if (mt == Constants.MESSAGE_TYPE.LS) {
-	    System.out.println(" [NN] > Processing LS");
+	    if (verbose) {
+		System.out.println(" [NN] > Processing LS");
+	    }
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.LS_REPLY);
 	    ArrayList<String> l = this.file_list();
 	    reply.set_arr_list(l);
 	}
 	if (mt == Constants.MESSAGE_TYPE.WRITE) {
-	    System.out.println(" [NN] > Processing WRITE");
+	    if (verbose) {
+		System.out.println(" [NN] > Processing WRITE");
+	    }
 	    ChunkName n = msg.get_chunk_name();
 	    String d = msg.get_data();
 	    this.assign_chunk(n, d);
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.WRITE_REPLY);
 	}
 	if (mt == Constants.MESSAGE_TYPE.READ_CHUNK) {
-	    System.out.println(" [NN] > Processing READ_CHUNK");
+	    if (verbose) {
+		System.out.println(" [NN] > Processing READ_CHUNK");
+	    }
 	    ChunkName n = msg.get_chunk_name();
 	    String d = this.get_chunk_data(n);
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.READ_CHUNK_REPLY);
@@ -348,7 +374,9 @@ public class NameNode {
 	}
 	else {
 	    while (true) {
-		System.out.println(" [NN] > Listening for incoming messages... ");	
+		if (verbose) {
+		    System.out.println(" [NN] > Listening for incoming messages... ");	
+		}
 		try {
 		    Socket sock = listener.accept();
 		    ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());

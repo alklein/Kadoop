@@ -27,6 +27,8 @@ import java.nio.file.Files;
  */
 public class AccessPoint {
 
+    static boolean verbose = false;
+
     static String IP_file = "NN_IP.txt";
     static String IP;
     static int port;
@@ -75,7 +77,9 @@ public class AccessPoint {
     {
     	Socket sock;
     	Msg ret_msg = null;
-	System.out.println(" [AP] > Contacting NameNode at IP " + NN_IP + " and port " + Integer.toString(NN_Port));
+	if (verbose) {
+	    System.out.println(" [AP] > Contacting NameNode at IP " + NN_IP + " and port " + Integer.toString(NN_Port));
+	}
 	try {
 	    sock = new Socket(NN_IP, NN_Port);
 	    ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
@@ -135,10 +139,14 @@ public class AccessPoint {
 	m.set_chunk_name(n);
 	Msg reply = communicate(m);
 	if (reply != null && reply.get_msg_type() == Constants.MESSAGE_TYPE.READ_CHUNK_REPLY) {
-	    System.out.println(" [AP] > Received READ_CHUNK_REPLY from NameNode!");
+	    if (verbose) {
+		System.out.println(" [AP] > Received READ_CHUNK_REPLY from NameNode!");
+	    }
 	    return reply.get_data();
 	} else {
-	    System.out.println(" [AP] > Did not get READ_CHUNK_REPLY from NameNode :(");
+	    if (verbose) {
+		System.out.println(" [AP] > Did not get READ_CHUNK_REPLY from NameNode :(");
+	    }
 	    return null;
 	}
     }
@@ -153,9 +161,13 @@ public class AccessPoint {
 	m.set_data(c.get_data());
 	Msg reply = communicate(m);
 	if (reply != null && reply.get_msg_type() == Constants.MESSAGE_TYPE.WRITE_REPLY) {
-	    System.out.println(" [AP] > Received WRITE_REPLY from NameNode!");
+	    if (verbose) {
+		System.out.println(" [AP] > Received WRITE_REPLY from NameNode!");
+	    }
 	} else {
-	    System.out.println(" [AP] > Did not get WRITE_REPLY from NameNode :(");
+	    if (verbose) {
+		System.out.println(" [AP] > Did not get WRITE_REPLY from NameNode :(");
+	    }
 	}
     }
 
@@ -165,9 +177,13 @@ public class AccessPoint {
 	greeting.set_return_address(my_address);
 	Msg reply = communicate(greeting);
 	if (reply != null && reply.get_msg_type() == Constants.MESSAGE_TYPE.GREETING_REPLY) {
-	    System.out.println(" [AP] > Received GREETING_REPLY from NameNode!");
+	    if (verbose) {
+		System.out.println(" [AP] > Received GREETING_REPLY from NameNode!");
+	    }
 	} else {
-	    System.out.println(" [AP] > Did not get GREETING_REPLY from NameNode :(");
+	    if (verbose) {
+		System.out.println(" [AP] > Did not get GREETING_REPLY from NameNode :(");
+	    }
 	}
     }
 

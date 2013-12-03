@@ -32,6 +32,8 @@ import java.nio.file.Files;
 
 public class Kadoop {
 
+    static boolean verbose = false;
+
     static String IP_file = "Master_IP.txt";
     static String IP;
     static int port;
@@ -126,10 +128,12 @@ public class Kadoop {
 	int lines_per_chunk = num_lines / num_chunks;
 	int leftover_lines = num_lines - (num_chunks * lines_per_chunk);
 
-	System.out.println(" >>> Number of chunks: " + Integer.toString(num_chunks));
-	System.out.println(" >>> Number of lines in file: " + Integer.toString(num_lines));
-	System.out.println(" >>> Lines per chunk: " + Integer.toString(lines_per_chunk));
-	System.out.println(" >>> Leftover lines: " + Integer.toString(leftover_lines));
+	if (verbose) {
+	    System.out.println(" >>> Number of chunks: " + Integer.toString(num_chunks));
+	    System.out.println(" >>> Number of lines in file: " + Integer.toString(num_lines));
+	    System.out.println(" >>> Lines per chunk: " + Integer.toString(lines_per_chunk));
+	    System.out.println(" >>> Leftover lines: " + Integer.toString(leftover_lines));
+	}
 
 	int chunk_count = 0;
 	int line_count;
@@ -183,12 +187,14 @@ public class Kadoop {
     */
     public Msg listen_to_Master() throws IOException, ClassNotFoundException {
 	while (true) { 
-	    System.out.println(" [K] > Listening for messages...");
+	    if (verbose) {
+		System.out.println(" [K] > Listening for messages...");
+	    }
 	    Msg msg = (Msg) ois.readObject();
-	    System.out.println(" [K] > Received a message!");
-	    if (msg.get_msg_type() == Constants.MESSAGE_TYPE.ASSIGN_MAPS_REPLY) {
-		System.out.println(" [K] > Message type: ASSIGN_MAPS_REPLY");
-	    } else {
+	    if (verbose) {
+		System.out.println(" [K] > Received a message!");
+	    }
+	    if (verbose) {
 		System.out.println(" [K] > Message type: " + msg.type_as_string());
 	    }
 	    return msg;
@@ -211,7 +217,9 @@ public class Kadoop {
 	msg.set_chunk_names(chunk_names);
 	msg.set_class_name(mapper_classname);	
 	try {
-	    System.out.println(" [K] > Dispatching MAP jobs to Master node...");
+	    if (verbose) {
+		System.out.println(" [K] > Dispatching MAP jobs to Master node...");
+	    }
 	    String MASTER_IP = this.read_Master_IP();
 	    sock = new Socket(MASTER_IP, UTILS.Constants.MASTER_PORT);
 	    oos = new ObjectOutputStream(sock.getOutputStream());
@@ -241,7 +249,9 @@ public class Kadoop {
 	msg.set_chunk_names(mapped_chunk_names);
 	msg.set_class_name(reducer_classname);	
 	try {
-	    System.out.println(" [K] > Dispatching REDUCE jobs to Master node...");
+	    if (verbose) {
+		System.out.println(" [K] > Dispatching REDUCE jobs to Master node...");
+	    }
 	    String MASTER_IP = this.read_Master_IP();
 	    sock = new Socket(MASTER_IP, UTILS.Constants.MASTER_PORT);
 	    oos = new ObjectOutputStream(sock.getOutputStream());
@@ -292,7 +302,7 @@ public class Kadoop {
     }
 
 
-    public void run_job(String data_filename, String mapper_classname, String reducer_classname, int num_chunks, boolean verbose) {
+    public void run_job(String data_filename, String mapper_classname, String reducer_classname, int num_chunks) {
 	ArrayList<ChunkName> chunk_names = null;
 	ArrayList<ChunkName> mapped_chunk_names = null;
 	String outfile_name = null;
@@ -302,8 +312,8 @@ public class Kadoop {
 	    System.out.println(" ~~~ INITIALIZING DATA...");
 	    chunk_names = this.init_data(data_filename, num_chunks);
 	    System.out.println(" ~~~ INITIALIZATION COMPLETE. CONTENTS OF DFS:");
-	    print_arr_list(ap.ls());
 	    if (verbose) {
+		print_arr_list(ap.ls());
 		for (int i=0; i < chunk_names.size(); i++) {
 		    ChunkName current = chunk_names.get(i);
 		    String name = current.get_filename();
@@ -322,8 +332,8 @@ public class Kadoop {
 	    mapped_chunk_names = this.perform_map(chunk_names, mapper_classname);
 	    if (mapped_chunk_names != null) {
 		System.out.println(" ~~~ MAP PHASE COMPLETE. CONTENTS OF DFS:");
-		print_arr_list(ap.ls());
 		if (verbose) {
+		    print_arr_list(ap.ls());
 		    for (int i=0; i < chunk_names.size(); i++) {
 			ChunkName current = chunk_names.get(i);
 			String name = current.get_filename();
@@ -348,7 +358,7 @@ public class Kadoop {
 	    ChunkName outfile = this.perform_reduce(mapped_chunk_names, reducer_classname);
 	    System.out.println(" ~~~ COMPUTATION COMPLETE. OUTFILE: " + outfile.to_String());
 	    String d = ap.read_chunk(outfile);
-	    System.out.println(" Final data: \n" + d);
+	    System.out.println("\n ~~~ FINAL OUTPUT: \n \n" + d);
 	}
     }    
 
@@ -374,7 +384,7 @@ public class Kadoop {
 	String mapper_classname = args[1];
 	String reducer_classname = args[2];
 	int num_chunks = Integer.parseInt(args[3]);
-	_k.run_job(data_filename, mapper_classname, reducer_classname, num_chunks, true);
+	_k.run_job(data_filename, mapper_classname, reducer_classname, num_chunks);
 
 	/*
 	String data_filename = "data.txt";

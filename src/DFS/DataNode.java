@@ -23,6 +23,8 @@ import java.nio.file.Files;
 
 public class DataNode {
 
+    static boolean verbose = false;
+
     static String IP_file = "NN_IP.txt";
     static String IP;
     static int port;
@@ -56,7 +58,9 @@ public class DataNode {
 	    a.set_IP(IP);
 	    a.set_port(port);
 	    my_address = a;
-	    System.out.println(" [DN] > Got DataNode host address: " + IP);
+	    if (verbose) {
+		System.out.println(" [DN] > Got DataNode host address: " + IP);
+	    }
 	} catch (UnknownHostException e) {
 	    System.out.println(" [DN] > Failed to get DataNode host address :(");
 	}
@@ -120,13 +124,6 @@ public class DataNode {
 	    }
 	}
 	return null;
-	/*
-	if (this.my_data.containsKey(n)) {
-	    System.out.println(" [DN] > Found key");
-	    return this.my_data.get(n);
-	} else {
-	    return null;
-	    } */
     }
 
     public void send_reply(Msg reply, Address add) {
@@ -146,7 +143,9 @@ public class DataNode {
     private void process(Msg msg) {
 	UTILS.Constants.MESSAGE_TYPE mt = msg.get_msg_type();
 	if (mt == Constants.MESSAGE_TYPE.READ_MEM) {
-	    System.out.println(" [DN] > Processing READ_MEM");	    
+	    if (verbose) {
+		System.out.println(" [DN] > Processing READ_MEM");	    
+	    }
 	    Address ret_add = msg.get_return_address();
 	    ChunkName n = msg.get_chunk_name();
 	    String data = this.read_from_mem(n);
@@ -164,7 +163,9 @@ public class DataNode {
 		e.printStackTrace();
 	    }
 	} else if (mt == Constants.MESSAGE_TYPE.WRITE_MEM) {
-	    System.out.println(" [DN] > Processing WRITE_MEM");	    
+	    if (verbose) {
+		System.out.println(" [DN] > Processing WRITE_MEM");	    
+	    }
 	    Address ret_add = msg.get_return_address();
 	    ChunkName n = msg.get_chunk_name();
 	    String data = msg.get_data();
@@ -190,9 +191,13 @@ public class DataNode {
     public void listen_to_NN() throws IOException, ClassNotFoundException {
 	ois = new ObjectInputStream(sock.getInputStream());	
 	while (true) { 
-	    System.out.println(" [DN] > Listening for messages...");
+	    if (verbose) {
+		System.out.println(" [DN] > Listening for messages...");
+	    }
 	    Msg msg = (Msg) ois.readObject();
-	    System.out.println(" [DN] > Received a message!");
+	    if (verbose) {
+		System.out.println(" [DN] > Received a message!");
+	    }
 	    this.process(msg);  
 	}
     }
@@ -211,7 +216,9 @@ public class DataNode {
      */
     public void connect() throws InterruptedException, ClassNotFoundException {
 	try {
-	    System.out.println(" [DN] > Attempting to reach NameNode...");
+	    if (verbose) {
+		System.out.println(" [DN] > Attempting to reach NameNode...");
+	    }
 	    String NAMENODE_IP = this.read_NN_IP();
 	    sock = new Socket(NAMENODE_IP, UTILS.Constants.NAMENODE_PORT);
 	    oos = new ObjectOutputStream(sock.getOutputStream());
