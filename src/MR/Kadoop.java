@@ -326,6 +326,8 @@ public class Kadoop {
 		String name = current.get_filename();
 		String chunk_ID = current.get_chunkID();
 		System.out.println("Filename: " + name + " chunkID: " + chunk_ID);
+		String d = ap.read_chunk(current);
+		System.out.println(" ... Data: " + d);
 	    }
 	} catch (IOException e) {
 	    System.out.println(" ~~~ INITIALIZATION FAILED. SHUTTING DOWN COMPUTATION.");
@@ -348,6 +350,8 @@ public class Kadoop {
 		    String name = current.get_filename();
 		    String chunk_ID = current.get_chunkID();
 		    System.out.println("Filename: " + name + " chunkID: " + chunk_ID);
+		    String d = ap.read_chunk(current);
+		    System.out.println(" ... Data: " + d);
 		}
 	    } else {
 		System.out.println(" ~~~ MAP PHASE FAILED. SHUTTING DOWN COMPUTATION.");

@@ -111,21 +111,81 @@ public class ComputeNode {
 	return result;
     } 
 
+    private ArrayList<ChunkName> merge_sort(ArrayList<ChunkName> mapped_chunk_names) {
+	ArrayList<ChunkName> result = new ArrayList<ChunkName>();
+	// TODO
+	return result;
+    }
+
+    private String perform_reduce(ArrayList<ChunkName> mapped_chunk_names, String class_name) {
+	ArrayList<String> lines = new ArrayList<String>();
+	for (int i=0; i < mapped_chunk_names.size(); i++) {
+	    ChunkName cur = mapped_chunk_names.get(i);
+	    String data = ap.read_chunk(cur);
+	    System.out.println(" [CN] > Name: " + cur.to_String());
+	    System.out.println(" [CN] > Data: " + data); // TEMP
+	    String cur_lines[] = data.split("\\r?\\n");
+	    for (int j=0; j < cur_lines.length; j++) {
+		String cur_str = cur_lines[j];
+		lines.add(cur_str);
+	    }	    
+	}
+	try {
+	    Class myClass = Class.forName(class_name);
+	    Reducer r = (Reducer)myClass.newInstance();
+	    ArrayList<String> sorted_lines = r.sort(lines);
+
+	    ChunkName sorted_name = mapped_chunk_names.get(0);
+	    String old_filename = sorted_name.get_filename();
+	    String sorted_filename = old_filename + "_sorted";
+	    sorted_name.set_filename(sorted_filename);
+
+	    String data = "";
+	    for (int i=0; i < lines.size(); i++) {
+		data += lines.get(i);
+	    }
+	    Chunk c = new Chunk();
+	    c.set_name(sorted_name);
+	    c.set_data(data);
+	    ap.write_chunk(c);
+	    
+	    ArrayList<String> sorted_filenames = new ArrayList<String>();
+	    ArrayList<String> sorted_chunkIDs = new ArrayList<String>();
+	    sorted_filenames.add(sorted_filename);
+	    sorted_chunkIDs.add(sorted_name.get_chunkID());
+	    String result = r.reduce(sorted_filenames, sorted_chunkIDs);
+	    return result;
+	} catch (ClassNotFoundException e) {
+	    System.out.println("Couldn't find class :(");
+	} catch (InstantiationException e) {
+	    e.printStackTrace();
+	} catch (IllegalAccessException e) {
+	    e.printStackTrace();
+	}
+	return "";
+    }
+
     /*
       Parses and processes incoming messages.
      */
     private void process(Msg msg) {
 	UTILS.Constants.MESSAGE_TYPE mt = msg.get_msg_type();
 	if (mt == Constants.MESSAGE_TYPE.MAP) {
+	    // apply mapper class
 	    System.out.println(" [CN] > Processing MAP");	    
 	    Address ret_add = msg.get_return_address();
 	    ChunkName n = msg.get_chunk_name();
 	    String class_name = msg.get_class_name();
 	    String data = ap.read_chunk(n);
-	    String result = perform_map(data, class_name);
+	    String result = this.perform_map(data, class_name);
 	    ChunkName new_name = n;
 	    new_name.set_filename(n.get_filename() + "_mapped");
-
+	    Chunk c = new Chunk();
+	    c.set_name(new_name);
+	    c.set_data(result);
+	    ap.write_chunk(c);
+	    
+	    // reply to master
 	    Msg reply = new Msg();
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.MAP_REPLY);
 	    reply.set_return_address(my_address);
@@ -140,7 +200,19 @@ public class ComputeNode {
 	    }
 	} 
 	if (mt == Constants.MESSAGE_TYPE.REDUCE) {
-	    // TEMP: do nothing, but do reply
+	    // perform merge sort first;
+	    // then apply reducer class
+	    System.out.println(" [CN] > Processing REDUCE");	    
+	    Address ret_add = msg.get_return_address();
+	    ArrayList<ChunkName> mapped_chunk_names = msg.get_chunk_names();
+	    ChunkName n = msg.get_chunk_name();
+	    String class_name = msg.get_class_name();
+	    String result = this.perform_reduce(mapped_chunk_names, class_name);
+	    ChunkName new_name = n;
+	    // CRASHING ON NEXT LINE:
+	    new_name.set_filename(n.get_filename() + "_reduced");
+
+	    // reply to master
 	    Msg reply = new Msg();
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.REDUCE_REPLY);
 	    reply.set_return_address(my_address);
