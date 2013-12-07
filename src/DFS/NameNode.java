@@ -359,7 +359,6 @@ public class NameNode {
 	    reply.set_msg_type(Constants.MESSAGE_TYPE.READ_CHUNK_REPLY);
 	    reply.set_data(d);
 	}
-	// TODO: respond to other message types here
 	return reply;
     }
 
